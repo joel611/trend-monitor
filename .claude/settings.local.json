@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run build)",
+      "Bash(bun:*)",
+      "Bash(bun --cwd packages/utils run build:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)"
+    ]
+  }
+}

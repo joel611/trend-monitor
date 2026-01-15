@@ -1,0 +1,23 @@
+name = "trend-monitor-ingestion-feeds"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[dev]
+port = 8792
+inspector_port = 9235
+
+[triggers]
+crons = ["*/30 * * * *"]
+
+[[queues.producers]]
+queue = "ingestion-queue"
+binding = "INGESTION_QUEUE"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "trend-monitor-local"
+database_id = "local"
+
+[[kv_namespaces]]
+binding = "CHECKPOINT"
+id = "local"

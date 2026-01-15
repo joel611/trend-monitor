@@ -1,0 +1,23 @@
+{
+	"name": "@trend-monitor/config",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check src",
+		"format": "biome check src",
+		"format:fix": "biome check --write src"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.0"
+	}
+}

@@ -1,0 +1,32 @@
+{
+	"name": "@trend-monitor/web",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check src",
+		"format": "biome check src",
+		"format:fix": "biome check --write src"
+	},
+	"dependencies": {
+		"@trend-monitor/types": "workspace:*",
+		"@trend-monitor/config": "workspace:*",
+		"@tanstack/react-router": "latest",
+		"@tanstack/react-query": "latest",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"@tailwindcss/postcss": "latest"
+	},
+	"devDependencies": {
+		"@tanstack/router-plugin": "latest",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"@vitejs/plugin-react": "latest",
+		"typescript": "^5.7.0",
+		"vite": "^6.0.0"
+	}
+}

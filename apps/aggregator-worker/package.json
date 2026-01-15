@@ -1,0 +1,25 @@
+{
+	"name": "@trend-monitor/aggregator-worker",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler dev",
+		"build": "tsc && wrangler deploy --dry-run",
+		"deploy": "wrangler deploy",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check src",
+		"format": "biome check src",
+		"format:fix": "biome check --write src"
+	},
+	"dependencies": {
+		"@trend-monitor/types": "workspace:*",
+		"@trend-monitor/config": "workspace:*",
+		"@trend-monitor/utils": "workspace:*"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "latest",
+		"typescript": "^5.7.0",
+		"wrangler": "latest"
+	}
+}
