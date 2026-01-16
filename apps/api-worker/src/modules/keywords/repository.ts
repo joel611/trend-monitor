@@ -1,5 +1,5 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import type { Keyword, KeywordRow } from "@trend-monitor/types";
+import { KeywordStatus, type Keyword, type KeywordRow } from "@trend-monitor/types";
 import { randomUUID } from "node:crypto";
 
 export class KeywordsRepository {
@@ -44,7 +44,7 @@ export class KeywordsRepository {
       name: input.name.trim(),
       aliases: input.aliases,
       tags: input.tags,
-      status: "active",
+      status: KeywordStatus.Active,
       createdAt: now,
       updatedAt: now,
     };
@@ -189,7 +189,7 @@ export class KeywordsRepository {
       name: row.name,
       aliases,
       tags,
-      status: row.status,
+      status: row.status as KeywordStatus,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

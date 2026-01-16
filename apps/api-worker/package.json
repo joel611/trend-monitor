@@ -16,16 +16,20 @@
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check src",
 		"format": "biome check src",
-		"format:fix": "biome check --write src"
+		"format:fix": "biome check --write src",
+		"wrangler:types": "wrangler types"
 	},
 	"dependencies": {
-		"@trend-monitor/types": "workspace:*",
+		"@elysiajs/cors": "^1.4.1",
+		"@elysiajs/openapi": "^1.4.13",
 		"@trend-monitor/config": "workspace:*",
+		"@trend-monitor/types": "workspace:*",
 		"@trend-monitor/utils": "workspace:*",
+		"add": "^2.0.6",
+		"bun": "^1.3.6",
 		"elysia": "latest"
 	},
 	"devDependencies": {
-		"@cloudflare/workers-types": "latest",
 		"@elysiajs/eden": "^1.4.6",
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/bun": "latest",

@@ -11,7 +11,8 @@
       "Bash(git commit:*)",
       "Bash(cat:*)",
       "Skill(superpowers:executing-plans)",
-      "Skill(elysia-skill:elysia)"
+      "Skill(elysia-skill:elysia)",
+      "Bash(git worktree:*)"
     ]
   },
   "enabledPlugins": {

@@ -137,7 +137,7 @@ This project uses OpenSpec for spec-driven development. Key points:
 
 ## References
 
-- Product Requirements: `doc/prd.md`
-- Architecture Design: `doc/architecture.md`
+- Product Requirements: `docs/prd.md`
+- Architecture Design: `docs/architecture.md`
 - OpenSpec Guidelines: `openspec/AGENTS.md`
 - Project Conventions: `openspec/project.md`
