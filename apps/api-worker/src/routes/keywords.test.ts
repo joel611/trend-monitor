@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { treaty } from '@elysiajs/eden';
-import app from '../index';
+import app, { db } from '../index';
 
 const client = treaty(app);
 
 describe('Keywords API', () => {
   beforeEach(async () => {
     // Clean up database
-    const db = app.decorator.db;
     await db.prepare('DELETE FROM keywords').run();
   });
 
@@ -20,7 +19,6 @@ describe('Keywords API', () => {
     });
 
     it('should return all keywords', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -41,7 +39,6 @@ describe('Keywords API', () => {
     });
 
     it('should filter by status', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -61,7 +58,6 @@ describe('Keywords API', () => {
     });
 
     it('should filter by tag', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -83,7 +79,6 @@ describe('Keywords API', () => {
 
   describe('GET /api/keywords/:id', () => {
     it('should return keyword by id', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -156,7 +151,6 @@ describe('Keywords API', () => {
 
   describe('PUT /api/keywords/:id', () => {
     it('should update keyword', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -179,7 +173,6 @@ describe('Keywords API', () => {
     });
 
     it('should update keyword status', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -204,7 +197,6 @@ describe('Keywords API', () => {
 
   describe('DELETE /api/keywords/:id', () => {
     it('should archive keyword (soft delete)', async () => {
-      const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`

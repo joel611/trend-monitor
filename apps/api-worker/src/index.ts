@@ -3,6 +3,7 @@ import { CloudflareAdapter } from "elysia/adapter/cloudflare-worker";
 import type { D1Database } from '@cloudflare/workers-types';
 import { Database } from 'bun:sqlite';
 import { keywordsRoutes } from './routes/keywords';
+import { mentionsRoutes } from './routes/mentions';
 
 // Mock DB for testing
 const createMockDB = (): D1Database => {
@@ -109,14 +110,15 @@ const createMockDB = (): D1Database => {
   } as any;
 };
 
-const db = createMockDB();
+export const db = createMockDB();
 
 const app = new Elysia({ adapter: CloudflareAdapter })
-  .decorate('db', db)
+  .state('env', { DB: db })
+  .derive(({ store }) => ({ env: store.env }))
   .get("/api/health", () => ({ status: "ok" }))
-  .use(keywordsRoutes(db))
-  .get("/api/trends/overview", () => ({ trends: [] }))
-  .get("/api/mentions", () => ({ mentions: [] }))
+  .use(keywordsRoutes)
+  .use(mentionsRoutes)
   .compile();
 
 export default app;
+export type App = typeof app;

@@ -8,7 +8,15 @@
       "Bash(xargs:*)",
       "Skill(superpowers:subagent-driven-development)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Skill(superpowers:executing-plans)",
+      "Skill(elysia-skill:elysia)"
     ]
+  },
+  "enabledPlugins": {
+    "playwright-e2e@joel-plugins": true,
+    "playwright@joel-plugins": true,
+    "elysia-specialist@joel-plugins": true
   }
 }
