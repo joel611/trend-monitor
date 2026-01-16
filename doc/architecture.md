@@ -26,7 +26,6 @@ Monorepo management is handled with Turborepo and a `apps/` + `packages/` layout
 .
 ├─ turbo.json
 ├─ package.json
-├─ pnpm-workspace.yaml
 ├─ apps/
 │  ├─ web/                 # SPA frontend
 │  ├─ api-worker/          # Elysia API Worker

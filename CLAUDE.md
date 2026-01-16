@@ -97,7 +97,7 @@ packages/
 ### Initial Setup (not yet done)
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Set up Turborepo workspace
 # (commands to be defined when scaffolding)
