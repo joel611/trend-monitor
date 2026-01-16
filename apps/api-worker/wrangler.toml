@@ -13,6 +13,7 @@ vars = { ENVIRONMENT = "development" }
 binding = "DB"
 database_name = "trend-monitor-local"
 database_id = "local"
+migrations_dir = "migrations"
 
 [[kv_namespaces]]
 binding = "CACHE"
