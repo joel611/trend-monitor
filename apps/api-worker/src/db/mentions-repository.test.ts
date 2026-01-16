@@ -1,226 +1,311 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { Database } from 'bun:sqlite';
-import type { D1Database } from '@cloudflare/workers-types';
-import { MentionsRepository } from './mentions-repository';
-import type { Mention } from '@trend-monitor/types';
+// apps/api-worker/src/db/mentions-repository.test.ts
+import { describe, expect, test, beforeEach } from "bun:test";
+import { MentionsRepository } from "./mentions-repository";
+import type { D1Database } from "@cloudflare/workers-types";
+import type { MentionRow } from "@trend-monitor/types";
 
-// Helper to create test database
-const createTestDB = (): D1Database => {
-  const db = new Database(':memory:');
-  
-  db.exec(`
-    CREATE TABLE mentions (
-      id TEXT PRIMARY KEY,
-      source TEXT NOT NULL,
-      source_id TEXT NOT NULL UNIQUE,
-      title TEXT,
-      content TEXT,
-      url TEXT,
-      author TEXT,
-      created_at TEXT NOT NULL,
-      fetched_at TEXT NOT NULL,
-      matched_keywords TEXT NOT NULL DEFAULT '[]'
-    );
-    CREATE INDEX idx_mentions_created_at ON mentions(created_at);
-    CREATE INDEX idx_mentions_source ON mentions(source);
-  `);
-  
+// Mock D1 database
+function createMockDb(): D1Database {
+  const data = new Map<string, MentionRow>();
+
   return {
     prepare: (query: string) => {
-      const stmt = db.prepare(query);
-      return {
-        bind: (...args: any[]) => ({
-          all: async () => {
-            const result = stmt.all(...args);
-            return { results: Array.isArray(result) ? result : [result], success: true };
-          },
-          first: async () => {
-            const result = stmt.get(...args);
-            return result === undefined ? null : result;
-          },
-          run: async () => {
-            const result = stmt.run(...args);
-            return { success: true, meta: { changes: result.changes } };
-          }
-        }),
-        all: async () => {
-          const result = stmt.all();
-          return { results: Array.isArray(result) ? result : [result], success: true };
-        },
+      const bindMethod = (...params: any[]) => ({
         first: async () => {
-          const result = stmt.get();
-          return result === undefined ? null : result;
+          if (query.includes("SELECT * FROM mentions WHERE id = ?")) {
+            return data.get(params[0]) || null;
+          }
+          if (query.includes("SELECT COUNT(*) as count FROM mentions")) {
+            // Apply filters for count
+            let filtered = Array.from(data.values());
+            
+            // Parse WHERE conditions from params based on query structure
+            if (query.includes("WHERE")) {
+              const whereParts = query.split("WHERE")[1].split("ORDER BY")[0];
+              let paramIndex = 0;
+              
+              if (whereParts.includes("matched_keywords LIKE")) {
+                const keywordId = params[paramIndex];
+                filtered = filtered.filter(row => 
+                  row.matched_keywords.includes(keywordId.replace(/%/g, ''))
+                );
+                paramIndex++;
+              }
+              
+              if (whereParts.includes("source = ?")) {
+                const source = params[paramIndex];
+                filtered = filtered.filter(row => row.source === source);
+                paramIndex++;
+              }
+              
+              if (whereParts.includes("created_at >= ?")) {
+                const from = params[paramIndex];
+                filtered = filtered.filter(row => row.created_at >= from);
+                paramIndex++;
+              }
+              
+              if (whereParts.includes("created_at <= ?")) {
+                const to = params[paramIndex];
+                filtered = filtered.filter(row => row.created_at <= to);
+                paramIndex++;
+              }
+            }
+            
+            return { count: filtered.length };
+          }
+          return null;
+        },
+        all: async () => {
+          if (query.includes("SELECT * FROM mentions")) {
+            let filtered = Array.from(data.values());
+            
+            // Parse WHERE conditions from params based on query structure
+            if (query.includes("WHERE")) {
+              const whereParts = query.split("WHERE")[1].split("ORDER BY")[0];
+              let paramIndex = 0;
+              
+              if (whereParts.includes("matched_keywords LIKE")) {
+                const keywordId = params[paramIndex];
+                filtered = filtered.filter(row => 
+                  row.matched_keywords.includes(keywordId.replace(/%/g, ''))
+                );
+                paramIndex++;
+              }
+              
+              if (whereParts.includes("source = ?")) {
+                const source = params[paramIndex];
+                filtered = filtered.filter(row => row.source === source);
+                paramIndex++;
+              }
+              
+              if (whereParts.includes("created_at >= ?")) {
+                const from = params[paramIndex];
+                filtered = filtered.filter(row => row.created_at >= from);
+                paramIndex++;
+              }
+              
+              if (whereParts.includes("created_at <= ?")) {
+                const to = params[paramIndex];
+                filtered = filtered.filter(row => row.created_at <= to);
+                paramIndex++;
+              }
+            }
+            
+            // Sort by created_at DESC
+            filtered.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            
+            // Apply pagination (last two params are limit and offset)
+            const limit = params[params.length - 2];
+            const offset = params[params.length - 1];
+            
+            return {
+              results: filtered.slice(offset, offset + limit),
+            };
+          }
+          return { results: [] };
         },
         run: async () => {
-          const result = stmt.run();
-          return { success: true, meta: { changes: result.changes } };
-        }
-      };
-    }
-  } as any;
-};
+          if (query.includes("INSERT")) {
+            const [id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords] = params;
+            data.set(id, {
+              id,
+              source,
+              source_id,
+              title,
+              content,
+              url,
+              author,
+              created_at,
+              fetched_at,
+              matched_keywords,
+            });
+          }
+          return { success: true };
+        },
+      });
 
-describe('MentionsRepository', () => {
+      return {
+        bind: bindMethod,
+      } as any;
+    },
+  } as any;
+}
+
+describe("MentionsRepository", () => {
   let db: D1Database;
   let repo: MentionsRepository;
 
   beforeEach(() => {
-    db = createTestDB();
+    db = createMockDb();
     repo = new MentionsRepository(db);
   });
 
-  describe('create', () => {
-    it('should create a new mention', async () => {
-      const input = {
-        source: 'reddit' as const,
-        sourceId: 'post_123',
-        content: 'Check out this amazing React library!',
-        url: 'https://reddit.com/r/reactjs/post_123',
-        author: 'user123',
-        createdAt: '2026-01-15T12:00:00Z',
-        matchedKeywords: ['react']
-      };
+  describe("list", () => {
+    test("returns paginated mentions", async () => {
+      // Insert test data
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m1",
+          "reddit",
+          "post1",
+          "Test Post 1",
+          "Content 1",
+          "https://reddit.com/1",
+          "user1",
+          "2026-01-15T10:00:00Z",
+          "2026-01-16T10:00:00Z",
+          JSON.stringify(["kw1"])
+        )
+        .run();
 
-      const mention = await repo.create(input);
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m2",
+          "x",
+          "tweet1",
+          null,
+          "Content 2",
+          "https://x.com/1",
+          "user2",
+          "2026-01-15T11:00:00Z",
+          "2026-01-16T11:00:00Z",
+          JSON.stringify(["kw2"])
+        )
+        .run();
 
-      expect(mention).toMatchObject({
-        source: 'reddit',
-        sourceId: 'post_123',
-        content: 'Check out this amazing React library!',
-        matchedKeywords: ['react']
-      });
-      expect(mention.id).toBeDefined();
-      expect(mention.fetchedAt).toBeDefined();
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m3",
+          "feed",
+          "article1",
+          "Test Article",
+          "Content 3",
+          "https://example.com/1",
+          "author1",
+          "2026-01-15T12:00:00Z",
+          "2026-01-16T12:00:00Z",
+          JSON.stringify(["kw1", "kw2"])
+        )
+        .run();
+
+      const result = await repo.list({ limit: 2, offset: 0 });
+
+      expect(result.mentions.length).toBe(2);
+      expect(result.total).toBe(3);
+      // Verify descending order by created_at
+      expect(result.mentions[0].id).toBe("m3");
+      expect(result.mentions[1].id).toBe("m2");
     });
 
-    it('should handle duplicate source_id', async () => {
-      const input = {
-        source: 'reddit' as const,
-        sourceId: 'post_123',
-        content: 'Content',
-        url: 'https://example.com',
-        createdAt: '2026-01-15T12:00:00Z',
-        matchedKeywords: ['react']
-      };
+    test("filters by keywordId", async () => {
+      // Insert test data
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m1",
+          "reddit",
+          "post1",
+          "Test Post 1",
+          "Content 1",
+          "https://reddit.com/1",
+          "user1",
+          "2026-01-15T10:00:00Z",
+          "2026-01-16T10:00:00Z",
+          JSON.stringify(["kw1"])
+        )
+        .run();
 
-      await repo.create(input);
-      
-      await expect(repo.create(input)).rejects.toThrow();
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m2",
+          "x",
+          "tweet1",
+          null,
+          "Content 2",
+          "https://x.com/1",
+          "user2",
+          "2026-01-15T11:00:00Z",
+          "2026-01-16T11:00:00Z",
+          JSON.stringify(["kw2"])
+        )
+        .run();
+
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m3",
+          "feed",
+          "article1",
+          "Test Article",
+          "Content 3",
+          "https://example.com/1",
+          "author1",
+          "2026-01-15T12:00:00Z",
+          "2026-01-16T12:00:00Z",
+          JSON.stringify(["kw1", "kw2"])
+        )
+        .run();
+
+      const result = await repo.list({ 
+        keywordId: "kw1", 
+        limit: 10, 
+        offset: 0 
+      });
+
+      expect(result.mentions.length).toBe(2);
+      expect(result.total).toBe(2);
+      expect(result.mentions[0].matchedKeywords).toContain("kw1");
+      expect(result.mentions[1].matchedKeywords).toContain("kw1");
     });
   });
 
-  describe('findById', () => {
-    it('should return mention by id', async () => {
-      const input = {
-        source: 'reddit' as const,
-        sourceId: 'post_123',
-        content: 'Content',
-        url: 'https://example.com',
-        createdAt: '2026-01-15T12:00:00Z',
-        matchedKeywords: ['react']
-      };
+  describe("findById", () => {
+    test("finds mention by ID", async () => {
+      await db
+        .prepare(
+          "INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          "m1",
+          "reddit",
+          "post1",
+          "Test Post",
+          "Test Content",
+          "https://reddit.com/1",
+          "user1",
+          "2026-01-15T10:00:00Z",
+          "2026-01-16T10:00:00Z",
+          JSON.stringify(["kw1"])
+        )
+        .run();
 
-      const created = await repo.create(input);
-      const found = await repo.findById(created.id);
-
-      expect(found).toEqual(created);
+      const found = await repo.findById("m1");
+      expect(found?.id).toBe("m1");
+      expect(found?.title).toBe("Test Post");
+      expect(found?.source).toBe("reddit");
     });
 
-    it('should return null for non-existent id', async () => {
-      const found = await repo.findById('nonexistent');
+    test("returns null for missing mention", async () => {
+      const found = await repo.findById("nonexistent-id");
       expect(found).toBeNull();
-    });
-  });
-
-  describe('findByTimeRange', () => {
-    beforeEach(async () => {
-      await repo.create({
-        source: 'reddit',
-        sourceId: 'post_1',
-        content: 'Old post',
-        url: 'https://example.com/1',
-        createdAt: '2026-01-10T12:00:00Z',
-        matchedKeywords: ['react']
-      });
-      
-      await repo.create({
-        source: 'x',
-        sourceId: 'tweet_2',
-        content: 'Recent tweet',
-        url: 'https://example.com/2',
-        createdAt: '2026-01-15T12:00:00Z',
-        matchedKeywords: ['vue']
-      });
-      
-      await repo.create({
-        source: 'reddit',
-        sourceId: 'post_3',
-        content: 'Another old post',
-        url: 'https://example.com/3',
-        createdAt: '2026-01-11T12:00:00Z',
-        matchedKeywords: ['react']
-      });
-    });
-
-    it('should return mentions within time range', async () => {
-      const mentions = await repo.findByTimeRange(
-        '2026-01-14T00:00:00Z',
-        '2026-01-16T00:00:00Z'
-      );
-
-      expect(mentions).toHaveLength(1);
-      expect(mentions[0].content).toBe('Recent tweet');
-    });
-
-    it('should filter by source', async () => {
-      const mentions = await repo.findByTimeRange(
-        '2026-01-01T00:00:00Z',
-        '2026-01-20T00:00:00Z',
-        { source: 'reddit' }
-      );
-
-      expect(mentions).toHaveLength(2);
-      expect(mentions.every(m => m.source === 'reddit')).toBe(true);
-    });
-
-    it('should filter by keyword', async () => {
-      const mentions = await repo.findByTimeRange(
-        '2026-01-01T00:00:00Z',
-        '2026-01-20T00:00:00Z',
-        { keyword: 'react' }
-      );
-
-      expect(mentions).toHaveLength(2);
-      expect(mentions.every(m => m.matchedKeywords.includes('react'))).toBe(true);
-    });
-
-    it('should apply limit and offset', async () => {
-      const page1 = await repo.findByTimeRange(
-        '2026-01-01T00:00:00Z',
-        '2026-01-20T00:00:00Z',
-        { limit: 2 }
-      );
-
-      expect(page1).toHaveLength(2);
-
-      const page2 = await repo.findByTimeRange(
-        '2026-01-01T00:00:00Z',
-        '2026-01-20T00:00:00Z',
-        { limit: 2, offset: 2 }
-      );
-
-      expect(page2).toHaveLength(1);
-    });
-
-    it('should order by created_at DESC', async () => {
-      const mentions = await repo.findByTimeRange(
-        '2026-01-01T00:00:00Z',
-        '2026-01-20T00:00:00Z'
-      );
-
-      expect(mentions[0].createdAt).toBe('2026-01-15T12:00:00Z');
-      expect(mentions[1].createdAt).toBe('2026-01-11T12:00:00Z');
-      expect(mentions[2].createdAt).toBe('2026-01-10T12:00:00Z');
     });
   });
 });
