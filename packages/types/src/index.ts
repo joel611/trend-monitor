@@ -53,3 +53,4 @@ export interface IngestionEvent {
 	metadata?: Record<string, unknown>;
 }
 export * from "./db";
+export * from "./api";
