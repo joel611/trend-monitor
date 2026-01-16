@@ -17,13 +17,41 @@
 			"cache": true
 		},
 		"format": {
-			"cache": true
+			"cache": false
 		},
 		"format:fix": {
 			"cache": false
 		},
+		"test": {
+			"dependsOn": ["^build"],
+			"cache": true,
+			"inputs": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts"]
+		},
+		"test:unit": {
+			"dependsOn": ["^build"],
+			"cache": true,
+			"inputs": ["src/**/*.ts", "src/**/*.tsx"]
+		},
+		"test:integration": {
+			"dependsOn": ["^build"],
+			"cache": true,
+			"inputs": ["src/**/*.ts", "test/**/*.ts"]
+		},
+		"test:e2e": {
+			"dependsOn": ["build"],
+			"cache": false
+		},
+		"test:watch": {
+			"cache": false,
+			"persistent": true
+		},
+		"test:coverage": {
+			"dependsOn": ["^build"],
+			"cache": false,
+			"outputs": ["coverage/**"]
+		},
 		"deploy": {
-			"dependsOn": ["build", "typecheck", "lint"]
+			"dependsOn": ["build", "typecheck", "lint", "test"]
 		}
 	}
 }

@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"jsx": "react-jsx",
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
-		"types": ["vite/client"],
+		"types": ["vite/client", "bun"],
 		"paths": {
 			"@trend-monitor/types": ["../../packages/types/src"],
 			"@trend-monitor/config": ["../../packages/config/src"]

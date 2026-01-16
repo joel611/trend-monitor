@@ -12,12 +12,16 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",
+		"test": "bun test",
+		"test:unit": "bun test",
+		"test:watch": "bun test --watch",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check src",
 		"format": "biome check src",
 		"format:fix": "biome check --write src"
 	},
 	"devDependencies": {
+		"@types/bun": "latest",
 		"typescript": "^5.7.0"
 	}
 }
