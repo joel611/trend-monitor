@@ -31,4 +31,32 @@ describe("Database Types", () => {
     };
     expect(row.source).toBe("reddit");
   });
+
+  test("DailyAggregateRow has all required fields", () => {
+    const row: DailyAggregateRow = {
+      id: "da-1",
+      date: "2026-01-16",
+      keyword_id: "kw-1",
+      source: "reddit",
+      mentions_count: 42,
+    };
+    expect(row.mentions_count).toBe(42);
+  });
+
+  test("MentionRow handles nullable fields", () => {
+    const row: MentionRow = {
+      id: "m-2",
+      source: "x",
+      source_id: "xyz789",
+      title: null,
+      content: "Content",
+      url: "https://example.com",
+      author: null,
+      created_at: "2026-01-16T00:00:00Z",
+      fetched_at: "2026-01-16T00:00:00Z",
+      matched_keywords: "[]",
+    };
+    expect(row.title).toBeNull();
+    expect(row.author).toBeNull();
+  });
 });
