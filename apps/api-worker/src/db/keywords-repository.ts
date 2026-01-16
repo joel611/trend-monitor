@@ -10,27 +10,38 @@ export class KeywordsRepository {
     aliases: string[];
     tags: string[];
   }): Promise<Keyword> {
+    // Validate input
+    if (!input.name?.trim()) {
+      throw new Error("Keyword name cannot be empty");
+    }
+
     const id = randomUUID();
     const now = new Date().toISOString();
 
-    await this.db
-      .prepare(
-        "INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-      )
-      .bind(
-        id,
-        input.name,
-        JSON.stringify(input.aliases),
-        JSON.stringify(input.tags),
-        "active",
-        now,
-        now
-      )
-      .run();
+    try {
+      await this.db
+        .prepare(
+          "INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(
+          id,
+          input.name.trim(),
+          JSON.stringify(input.aliases),
+          JSON.stringify(input.tags),
+          "active",
+          now,
+          now
+        )
+        .run();
+    } catch (err) {
+      throw new Error(
+        `Failed to create keyword: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
+    }
 
     return {
       id,
-      name: input.name,
+      name: input.name.trim(),
       aliases: input.aliases,
       tags: input.tags,
       status: "active",
@@ -40,20 +51,44 @@ export class KeywordsRepository {
   }
 
   async findById(id: string): Promise<Keyword | null> {
-    const row = await this.db
-      .prepare("SELECT * FROM keywords WHERE id = ?")
-      .bind(id)
-      .first<KeywordRow>();
+    try {
+      const row = await this.db
+        .prepare("SELECT * FROM keywords WHERE id = ?")
+        .bind(id)
+        .first<KeywordRow>();
 
-    return row ? this.rowToEntity(row) : null;
+      return row ? this.rowToEntity(row) : null;
+    } catch (err) {
+      throw new Error(
+        `Failed to find keyword: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
+    }
   }
 
-  async list(): Promise<Keyword[]> {
-    const result = await this.db
-      .prepare("SELECT * FROM keywords ORDER BY created_at DESC")
-      .all<KeywordRow>();
+  async list(options?: { limit?: number; offset?: number }): Promise<Keyword[]> {
+    const limit = options?.limit || 100;
+    const offset = options?.offset || 0;
 
-    return result.results.map(this.rowToEntity);
+    // Validate pagination parameters
+    if (limit < 1 || limit > 1000) {
+      throw new Error("Limit must be between 1 and 1000");
+    }
+    if (offset < 0) {
+      throw new Error("Offset must be non-negative");
+    }
+
+    try {
+      const result = await this.db
+        .prepare("SELECT * FROM keywords ORDER BY created_at DESC LIMIT ? OFFSET ?")
+        .bind(limit, offset)
+        .all<KeywordRow>();
+
+      return result.results.map((row) => this.rowToEntity(row));
+    } catch (err) {
+      throw new Error(
+        `Failed to list keywords: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
+    }
   }
 
   async update(
@@ -68,12 +103,17 @@ export class KeywordsRepository {
     const existing = await this.findById(id);
     if (!existing) return null;
 
+    // Validate name if provided
+    if (input.name !== undefined && !input.name?.trim()) {
+      throw new Error("Keyword name cannot be empty");
+    }
+
     const updates: string[] = [];
     const params: any[] = [];
 
     if (input.name !== undefined) {
       updates.push("name = ?");
-      params.push(input.name);
+      params.push(input.name.trim());
     }
     if (input.aliases !== undefined) {
       updates.push("aliases = ?");
@@ -96,29 +136,59 @@ export class KeywordsRepository {
 
     const query = "UPDATE keywords SET " + updates.join(", ") + " WHERE id = ?";
 
-    await this.db
-      .prepare(query)
-      .bind(...params)
-      .run();
+    try {
+      await this.db
+        .prepare(query)
+        .bind(...params)
+        .run();
+    } catch (err) {
+      throw new Error(
+        `Failed to update keyword: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
+    }
 
     return this.findById(id);
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.db
-      .prepare("UPDATE keywords SET status = 'archived', updated_at = ? WHERE id = ?")
-      .bind(new Date().toISOString(), id)
-      .run();
+    try {
+      const result = await this.db
+        .prepare("UPDATE keywords SET status = 'archived', updated_at = ? WHERE id = ?")
+        .bind(new Date().toISOString(), id)
+        .run();
 
-    return result.success;
+      return result.success;
+    } catch (err) {
+      throw new Error(
+        `Failed to delete keyword: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
+    }
   }
 
   private rowToEntity(row: KeywordRow): Keyword {
+    let aliases: string[] = [];
+    let tags: string[] = [];
+
+    // Safe JSON parsing with fallbacks
+    try {
+      aliases = JSON.parse(row.aliases);
+    } catch (e) {
+      console.error("Failed to parse aliases JSON in keyword row:", row.id, e);
+      aliases = [];
+    }
+
+    try {
+      tags = JSON.parse(row.tags);
+    } catch (e) {
+      console.error("Failed to parse tags JSON in keyword row:", row.id, e);
+      tags = [];
+    }
+
     return {
       id: row.id,
       name: row.name,
-      aliases: JSON.parse(row.aliases),
-      tags: JSON.parse(row.tags),
+      aliases,
+      tags,
       status: row.status,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
