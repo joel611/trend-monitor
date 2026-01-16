@@ -35,7 +35,7 @@ describe("API Worker", () => {
 			const response = await app.handle(new Request("http://localhost/api/keywords"));
 
 			const data = await response.json();
-			expect(data).toEqual({ keywords: [] });
+			expect(data).toEqual({ keywords: [], total: 0 });
 		});
 
 		test("returns JSON content type", async () => {

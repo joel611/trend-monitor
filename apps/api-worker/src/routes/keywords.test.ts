@@ -16,7 +16,7 @@ describe('Keywords API', () => {
       const { data, error } = await client.api.keywords.get();
       
       expect(error).toBeNull();
-      expect(data).toEqual([]);
+      expect(data).toEqual({ keywords: [], total: 0 });
     });
 
     it('should return all keywords', async () => {
@@ -29,8 +29,9 @@ describe('Keywords API', () => {
       const { data, error } = await client.api.keywords.get();
       
       expect(error).toBeNull();
-      expect(data).toHaveLength(1);
-      expect(data![0]).toMatchObject({
+      expect(data?.keywords).toHaveLength(1);
+      expect(data?.total).toBe(1);
+      expect(data?.keywords[0]).toMatchObject({
         id: 'kw1',
         name: 'React',
         aliases: ['ReactJS'],
@@ -54,8 +55,9 @@ describe('Keywords API', () => {
       const { data, error } = await client.api.keywords.get({ query: { status: 'active' } });
       
       expect(error).toBeNull();
-      expect(data).toHaveLength(1);
-      expect(data![0].id).toBe('kw1');
+      expect(data?.keywords).toHaveLength(1);
+      expect(data?.total).toBe(1);
+      expect(data?.keywords[0]?.name).toBe('React');
     });
 
     it('should filter by tag', async () => {
@@ -73,19 +75,13 @@ describe('Keywords API', () => {
       const { data, error } = await client.api.keywords.get({ query: { tag: 'frontend' } });
       
       expect(error).toBeNull();
-      expect(data).toHaveLength(1);
-      expect(data![0].id).toBe('kw1');
+      expect(data?.keywords).toHaveLength(1);
+      expect(data?.total).toBe(1);
+      expect(data?.keywords[0]?.name).toBe('React');
     });
   });
 
   describe('GET /api/keywords/:id', () => {
-    it('should return 404 for non-existent keyword', async () => {
-      const { data, error, status } = await client.api.keywords({ id: 'nonexistent' }).get();
-      
-      expect(status).toBe(404);
-      expect(error).toBeDefined();
-    });
-
     it('should return keyword by id', async () => {
       const db = app.decorator.db;
       await db.prepare(
@@ -104,68 +100,84 @@ describe('Keywords API', () => {
         status: 'active'
       });
     });
+
+    it('should return 404 for non-existent keyword', async () => {
+      const { error, status } = await client.api.keywords({ id: 'nonexistent' }).get();
+      
+      expect(status).toBe(404);
+      expect(error).toBeDefined();
+    });
   });
 
   describe('POST /api/keywords', () => {
     it('should create a new keyword', async () => {
-      const input = {
+      const { data, error, status } = await client.api.keywords.post({
         name: 'TypeScript',
         aliases: ['TS'],
-        tags: ['frontend', 'language']
-      };
-
-      const { data, error, status } = await client.api.keywords.post(input);
+        tags: ['language']
+      });
       
       expect(error).toBeNull();
       expect(status).toBe(201);
       expect(data).toMatchObject({
         name: 'TypeScript',
         aliases: ['TS'],
-        tags: ['frontend', 'language'],
+        tags: ['language'],
         status: 'active'
       });
-      expect(data!.id).toBeDefined();
+      expect(data?.id).toBeDefined();
+      expect(data?.createdAt).toBeDefined();
     });
 
-    it('should reject invalid input', async () => {
-      const { status } = await client.api.keywords.post({ name: '' });
+    it('should create keyword with minimal fields', async () => {
+      const { data, error, status } = await client.api.keywords.post({
+        name: 'Go'
+      });
+      
+      expect(error).toBeNull();
+      expect(status).toBe(201);
+      expect(data).toMatchObject({
+        name: 'Go',
+        aliases: [],
+        tags: [],
+        status: 'active'
+      });
+    });
+
+    it('should reject empty name', async () => {
+      const { error, status } = await client.api.keywords.post({
+        name: ''
+      });
       
       expect(status).toBe(400);
+      expect(error).toBeDefined();
     });
   });
 
   describe('PUT /api/keywords/:id', () => {
-    it('should update existing keyword', async () => {
+    it('should update keyword', async () => {
       const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
       ).bind('kw1', 'React', '[]', '[]', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z').run();
 
-      const update = {
-        aliases: ['ReactJS', 'React.js'],
+      const { data, error } = await client.api.keywords({ id: 'kw1' }).put({
+        name: 'React.js',
+        aliases: ['ReactJS'],
         tags: ['frontend', 'library']
-      };
-
-      const { data, error } = await client.api.keywords({ id: 'kw1' }).put(update);
+      });
       
       expect(error).toBeNull();
       expect(data).toMatchObject({
         id: 'kw1',
-        name: 'React',
-        aliases: ['ReactJS', 'React.js'],
-        tags: ['frontend', 'library']
+        name: 'React.js',
+        aliases: ['ReactJS'],
+        tags: ['frontend', 'library'],
+        status: 'active'
       });
     });
 
-    it('should return 404 for non-existent keyword', async () => {
-      const { status } = await client.api.keywords({ id: 'nonexistent' }).put({ tags: ['test'] });
-      
-      expect(status).toBe(404);
-    });
-  });
-
-  describe('PATCH /api/keywords/:id/status', () => {
     it('should update keyword status', async () => {
       const db = app.decorator.db;
       await db.prepare(
@@ -173,25 +185,44 @@ describe('Keywords API', () => {
          VALUES (?, ?, ?, ?, ?, ?, ?)`
       ).bind('kw1', 'React', '[]', '[]', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z').run();
 
-      const { data, error } = await client.api.keywords({ id: 'kw1' }).status.patch({ status: 'archived' });
-      
-      expect(error).toBeNull();
-      expect(data).toMatchObject({
-        id: 'kw1',
+      const { data, error } = await client.api.keywords({ id: 'kw1' }).put({
         status: 'archived'
       });
+      
+      expect(error).toBeNull();
+      expect(data?.status).toBe('archived');
     });
 
-    it('should reject invalid status', async () => {
+    it('should return 404 for non-existent keyword', async () => {
+      const { status } = await client.api.keywords({ id: 'nonexistent' }).put({
+        name: 'Updated'
+      });
+      
+      expect(status).toBe(404);
+    });
+  });
+
+  describe('DELETE /api/keywords/:id', () => {
+    it('should archive keyword (soft delete)', async () => {
       const db = app.decorator.db;
       await db.prepare(
         `INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
       ).bind('kw1', 'React', '[]', '[]', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z').run();
 
-      const { status } = await client.api.keywords({ id: 'kw1' }).status.patch({ status: 'invalid' });
+      const { status } = await client.api.keywords({ id: 'kw1' }).delete();
       
-      expect(status).toBe(400);
+      expect(status).toBe(204);
+      
+      // Verify keyword is archived, not deleted
+      const keyword = await db.prepare('SELECT * FROM keywords WHERE id = ?').bind('kw1').first();
+      expect(keyword?.status).toBe('archived');
+    });
+
+    it('should return 404 for non-existent keyword', async () => {
+      const { status } = await client.api.keywords({ id: 'nonexistent' }).delete();
+      
+      expect(status).toBe(404);
     });
   });
 });

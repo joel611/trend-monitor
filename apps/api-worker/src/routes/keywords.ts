@@ -1,12 +1,13 @@
 import { Elysia, t } from 'elysia';
 import type { D1Database } from '@cloudflare/workers-types';
 import { KeywordsRepository } from '../db/keywords-repository';
+import type { KeywordResponse, ListKeywordsResponse } from '@trend-monitor/types';
 
 export const keywordsRoutes = (db: D1Database) =>
   new Elysia({ prefix: '/api/keywords' })
     .get(
       '/',
-      async ({ query }) => {
+      async ({ query }): Promise<ListKeywordsResponse> => {
         const repo = new KeywordsRepository(db);
         let keywords = await repo.list();
         
@@ -20,7 +21,10 @@ export const keywordsRoutes = (db: D1Database) =>
           keywords = keywords.filter(k => k.tags.includes(query.tag));
         }
         
-        return keywords;
+        return {
+          keywords: keywords,
+          total: keywords.length
+        };
       },
       {
         query: t.Object({
@@ -31,7 +35,7 @@ export const keywordsRoutes = (db: D1Database) =>
     )
     .get(
       '/:id',
-      async ({ params, set }) => {
+      async ({ params, set }): Promise<KeywordResponse | { message: string }> => {
         const repo = new KeywordsRepository(db);
         const keyword = await repo.findById(params.id);
         
@@ -50,7 +54,7 @@ export const keywordsRoutes = (db: D1Database) =>
     )
     .post(
       '/',
-      async ({ body, set }) => {
+      async ({ body, set }): Promise<KeywordResponse> => {
         const repo = new KeywordsRepository(db);
         const keyword = await repo.create({
           name: body.name,
@@ -70,7 +74,7 @@ export const keywordsRoutes = (db: D1Database) =>
     )
     .put(
       '/:id',
-      async ({ params, body, set }) => {
+      async ({ params, body, set }): Promise<KeywordResponse | { message: string }> => {
         const repo = new KeywordsRepository(db);
         const keyword = await repo.update(params.id, body);
         
@@ -88,29 +92,28 @@ export const keywordsRoutes = (db: D1Database) =>
         body: t.Object({
           name: t.Optional(t.String({ minLength: 1 })),
           aliases: t.Optional(t.Array(t.String())),
-          tags: t.Optional(t.Array(t.String()))
+          tags: t.Optional(t.Array(t.String())),
+          status: t.Optional(t.Union([t.Literal('active'), t.Literal('archived')]))
         })
       }
     )
-    .patch(
-      '/:id/status',
-      async ({ params, body, set }) => {
+    .delete(
+      '/:id',
+      async ({ params, set }) => {
         const repo = new KeywordsRepository(db);
-        const keyword = await repo.update(params.id, { status: body.status });
+        const keyword = await repo.update(params.id, { status: 'archived' });
         
         if (!keyword) {
           set.status = 404;
           return { message: 'Keyword not found' };
         }
         
-        return keyword;
+        set.status = 204;
+        return null;
       },
       {
         params: t.Object({
           id: t.String()
-        }),
-        body: t.Object({
-          status: t.Union([t.Literal('active'), t.Literal('archived')])
         })
       }
     );
