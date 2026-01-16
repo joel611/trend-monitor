@@ -1,4 +1,7 @@
 -- migrations/0001_init_schema.sql
+-- Apply migrations using wrangler CLI:
+--   Local: wrangler d1 migrations apply trend-monitor-local --local
+--   Production: wrangler d1 migrations apply trend-monitor --remote
 
 -- Keywords table
 CREATE TABLE IF NOT EXISTS keywords (
@@ -7,8 +10,8 @@ CREATE TABLE IF NOT EXISTS keywords (
     aliases TEXT NOT NULL DEFAULT '[]',
     tags TEXT NOT NULL DEFAULT '[]',
     status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'archived')),
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Mentions table
