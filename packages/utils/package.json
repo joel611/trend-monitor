@@ -1,0 +1,27 @@
+{
+	"name": "@trend-monitor/utils",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"test": "bun test",
+		"test:unit": "bun test",
+		"test:watch": "bun test --watch",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check src",
+		"format": "biome check src",
+		"format:fix": "biome check --write src"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5.7.0"
+	}
+}

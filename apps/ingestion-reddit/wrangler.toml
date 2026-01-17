@@ -1,0 +1,23 @@
+name = "trend-monitor-ingestion-reddit"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[dev]
+port = 8790
+inspector_port = 9233
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[queues.producers]]
+queue = "ingestion-queue"
+binding = "INGESTION_QUEUE"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "trend-monitor-local"
+database_id = "local"
+
+[[kv_namespaces]]
+binding = "CHECKPOINT"
+id = "local"

@@ -26,7 +26,6 @@ Monorepo management is handled with Turborepo and a `apps/` + `packages/` layout
 .
 ├─ turbo.json
 ├─ package.json
-├─ pnpm-workspace.yaml
 ├─ apps/
 │  ├─ web/                 # SPA frontend
 │  ├─ api-worker/          # Elysia API Worker
@@ -36,9 +35,9 @@ Monorepo management is handled with Turborepo and a `apps/` + `packages/` layout
 │  ├─ processor-worker/    # Queue consumer, writes mentions to D1
 │  └─ aggregator-worker/   # Aggregates mentions into daily stats
 └─ packages/
-   ├─ shared-types/        # Shared TypeScript types/interfaces
-   ├─ shared-config/       # Shared configuration & constants
-   └─ shared-utils/        # Shared pure utilities (matching, time, etc.)
+   ├─ types/        # Shared TypeScript types/interfaces
+   ├─ config/       # Shared configuration & constants
+   └─ utils/        # Shared pure utilities (matching, time, etc.)
 ```
 
 ### 2.1 apps
