@@ -1,214 +1,60 @@
 // apps/api-worker/src/db/mentions-repository.test.ts
 import { describe, expect, test, beforeEach } from "bun:test";
 import { MentionsRepository } from "./repository";
-import type { D1Database } from "@cloudflare/workers-types";
-import type { MentionRow } from "@trend-monitor/types";
-
-// Mock D1 database
-function createMockDb(): D1Database {
-	const data = new Map<string, MentionRow>();
-
-	return {
-		prepare: (query: string) => {
-			const bindMethod = (...params: any[]) => ({
-				first: async () => {
-					if (query.includes("SELECT * FROM mentions WHERE id = ?")) {
-						return data.get(params[0]) || null;
-					}
-					if (query.includes("SELECT COUNT(*) as count FROM mentions")) {
-						// Apply filters for count
-						let filtered = Array.from(data.values());
-
-						// Parse WHERE conditions from params based on query structure
-						if (query.includes("WHERE")) {
-							const whereParts = query.split("WHERE")[1].split("ORDER BY")[0];
-							let paramIndex = 0;
-
-							if (whereParts.includes("matched_keywords LIKE")) {
-								const keywordId = params[paramIndex];
-								filtered = filtered.filter((row) =>
-									row.matched_keywords.includes(keywordId.replace(/%/g, "")),
-								);
-								paramIndex++;
-							}
-
-							if (whereParts.includes("source = ?")) {
-								const source = params[paramIndex];
-								filtered = filtered.filter((row) => row.source === source);
-								paramIndex++;
-							}
-
-							if (whereParts.includes("created_at >= ?")) {
-								const from = params[paramIndex];
-								filtered = filtered.filter((row) => row.created_at >= from);
-								paramIndex++;
-							}
-
-							if (whereParts.includes("created_at <= ?")) {
-								const to = params[paramIndex];
-								filtered = filtered.filter((row) => row.created_at <= to);
-								paramIndex++;
-							}
-						}
-
-						return { count: filtered.length };
-					}
-					return null;
-				},
-				all: async () => {
-					if (query.includes("SELECT * FROM mentions")) {
-						let filtered = Array.from(data.values());
-
-						// Parse WHERE conditions from params based on query structure
-						if (query.includes("WHERE")) {
-							const whereParts = query.split("WHERE")[1].split("ORDER BY")[0];
-							let paramIndex = 0;
-
-							if (whereParts.includes("matched_keywords LIKE")) {
-								const keywordId = params[paramIndex];
-								filtered = filtered.filter((row) =>
-									row.matched_keywords.includes(keywordId.replace(/%/g, "")),
-								);
-								paramIndex++;
-							}
-
-							if (whereParts.includes("source = ?")) {
-								const source = params[paramIndex];
-								filtered = filtered.filter((row) => row.source === source);
-								paramIndex++;
-							}
-
-							if (whereParts.includes("created_at >= ?")) {
-								const from = params[paramIndex];
-								filtered = filtered.filter((row) => row.created_at >= from);
-								paramIndex++;
-							}
-
-							if (whereParts.includes("created_at <= ?")) {
-								const to = params[paramIndex];
-								filtered = filtered.filter((row) => row.created_at <= to);
-								paramIndex++;
-							}
-						}
-
-						// Sort by created_at DESC
-						filtered.sort(
-							(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-						);
-
-						// Apply pagination (last two params are limit and offset)
-						const limit = params[params.length - 2];
-						const offset = params[params.length - 1];
-
-						return {
-							results: filtered.slice(offset, offset + limit),
-						};
-					}
-					return { results: [] };
-				},
-				run: async () => {
-					if (query.includes("INSERT")) {
-						const [
-							id,
-							source,
-							source_id,
-							title,
-							content,
-							url,
-							author,
-							created_at,
-							fetched_at,
-							matched_keywords,
-						] = params;
-						data.set(id, {
-							id,
-							source,
-							source_id,
-							title,
-							content,
-							url,
-							author,
-							created_at,
-							fetched_at,
-							matched_keywords,
-						});
-					}
-					return { success: true };
-				},
-			});
-
-			return {
-				bind: bindMethod,
-			} as any;
-		},
-	} as any;
-}
+import { createMockDB } from "../../lib/db/mock";
+import type { DbClient } from "../../lib/db/client";
+import { mentions } from "../../lib/db/schema";
 
 describe("MentionsRepository", () => {
-	let db: D1Database;
+	let db: DbClient;
 	let repo: MentionsRepository;
 
 	beforeEach(() => {
-		db = createMockDb();
+		db = createMockDB();
 		repo = new MentionsRepository(db);
 	});
 
 	describe("list", () => {
 		test("returns paginated mentions", async () => {
-			// Insert test data
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Test Post 1",
-					"Content 1",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					null,
-					"Content 2",
-					"https://x.com/1",
-					"user2",
-					"2026-01-15T11:00:00Z",
-					"2026-01-16T11:00:00Z",
-					JSON.stringify(["kw2"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m3",
-					"feed",
-					"article1",
-					"Test Article",
-					"Content 3",
-					"https://example.com/1",
-					"author1",
-					"2026-01-15T12:00:00Z",
-					"2026-01-16T12:00:00Z",
-					JSON.stringify(["kw1", "kw2"]),
-				)
-				.run();
+			// Insert test data using Drizzle
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Test Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-15T10:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "x",
+					sourceId: "tweet1",
+					title: null,
+					content: "Content 2",
+					url: "https://x.com/1",
+					author: "user2",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T11:00:00Z",
+					matchedKeywords: ["kw2"],
+				},
+				{
+					id: "m3",
+					source: "feed",
+					sourceId: "article1",
+					title: "Test Article",
+					content: "Content 3",
+					url: "https://example.com/1",
+					author: "author1",
+					createdAt: "2026-01-15T12:00:00Z",
+					fetchedAt: "2026-01-16T12:00:00Z",
+					matchedKeywords: ["kw1", "kw2"],
+				},
+			]);
 
 			const result = await repo.list({ limit: 2, offset: 0 });
 
@@ -220,60 +66,45 @@ describe("MentionsRepository", () => {
 		});
 
 		test("filters by keywordId", async () => {
-			// Insert test data
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Test Post 1",
-					"Content 1",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					null,
-					"Content 2",
-					"https://x.com/1",
-					"user2",
-					"2026-01-15T11:00:00Z",
-					"2026-01-16T11:00:00Z",
-					JSON.stringify(["kw2"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m3",
-					"feed",
-					"article1",
-					"Test Article",
-					"Content 3",
-					"https://example.com/1",
-					"author1",
-					"2026-01-15T12:00:00Z",
-					"2026-01-16T12:00:00Z",
-					JSON.stringify(["kw1", "kw2"]),
-				)
-				.run();
+			// Insert test data using Drizzle
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Test Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-15T10:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "x",
+					sourceId: "tweet1",
+					title: null,
+					content: "Content 2",
+					url: "https://x.com/1",
+					author: "user2",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T11:00:00Z",
+					matchedKeywords: ["kw2"],
+				},
+				{
+					id: "m3",
+					source: "feed",
+					sourceId: "article1",
+					title: "Test Article",
+					content: "Content 3",
+					url: "https://example.com/1",
+					author: "author1",
+					createdAt: "2026-01-15T12:00:00Z",
+					fetchedAt: "2026-01-16T12:00:00Z",
+					matchedKeywords: ["kw1", "kw2"],
+				},
+			]);
 
 			const result = await repo.list({
 				keywordId: "kw1",
@@ -290,23 +121,18 @@ describe("MentionsRepository", () => {
 
 	describe("findById", () => {
 		test("finds mention by ID", async () => {
-			await db
-				.prepare(
-					"INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Test Post",
-					"Test Content",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
+			await db.insert(mentions).values({
+				id: "m1",
+				source: "reddit",
+				sourceId: "post1",
+				title: "Test Post",
+				content: "Test Content",
+				url: "https://reddit.com/1",
+				author: "user1",
+				createdAt: "2026-01-15T10:00:00Z",
+				fetchedAt: "2026-01-16T10:00:00Z",
+				matchedKeywords: ["kw1"],
+			});
 
 			const found = await repo.findById("m1");
 			expect(found?.id).toBe("m1");
