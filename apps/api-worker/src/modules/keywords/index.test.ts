@@ -2,13 +2,15 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { treaty } from "@elysiajs/eden";
 import app from "../..";
 import { db } from "../../lib/db";
+import { keywords } from "../../lib/db/schema";
+import { sql } from "drizzle-orm";
 
 const client = treaty(app);
 
 describe("Keywords API", () => {
 	beforeEach(async () => {
-		// Clean up database
-		await db.prepare("DELETE FROM keywords").run();
+		// Clean up database using Drizzle
+		await db.delete(keywords);
 	});
 
 	describe("GET /api/keywords", () => {
@@ -20,21 +22,15 @@ describe("Keywords API", () => {
 		});
 
 		it("should return all keywords", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"kw1",
-					"React",
-					'["ReactJS"]',
-					'["frontend"]',
-					"active",
-					"2026-01-01T00:00:00Z",
-					"2026-01-01T00:00:00Z",
-				)
-				.run();
+			await db.insert(keywords).values({
+				id: "kw1",
+				name: "React",
+				aliases: ["ReactJS"],
+				tags: ["frontend"],
+				status: "active",
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+			});
 
 			const { data, error } = await client.api.keywords.get();
 
@@ -51,21 +47,26 @@ describe("Keywords API", () => {
 		});
 
 		it("should filter by status", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind("kw1", "React", "[]", "[]", "active", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z")
-				.run();
-
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind("kw2", "Vue", "[]", "[]", "archived", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z")
-				.run();
+			await db.insert(keywords).values([
+				{
+					id: "kw1",
+					name: "React",
+					aliases: [],
+					tags: [],
+					status: "active",
+					createdAt: "2026-01-01T00:00:00Z",
+					updatedAt: "2026-01-01T00:00:00Z",
+				},
+				{
+					id: "kw2",
+					name: "Vue",
+					aliases: [],
+					tags: [],
+					status: "archived",
+					createdAt: "2026-01-01T00:00:00Z",
+					updatedAt: "2026-01-01T00:00:00Z",
+				},
+			]);
 
 			const { data, error } = await client.api.keywords.get({ query: { status: "active" } });
 
@@ -76,37 +77,26 @@ describe("Keywords API", () => {
 		});
 
 		it("should filter by tag", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"kw1",
-					"React",
-					"[]",
-					'["frontend"]',
-					"active",
-					"2026-01-01T00:00:00Z",
-					"2026-01-01T00:00:00Z",
-				)
-				.run();
-
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"kw2",
-					"PostgreSQL",
-					"[]",
-					'["database"]',
-					"active",
-					"2026-01-01T00:00:00Z",
-					"2026-01-01T00:00:00Z",
-				)
-				.run();
+			await db.insert(keywords).values([
+				{
+					id: "kw1",
+					name: "React",
+					aliases: [],
+					tags: ["frontend"],
+					status: "active",
+					createdAt: "2026-01-01T00:00:00Z",
+					updatedAt: "2026-01-01T00:00:00Z",
+				},
+				{
+					id: "kw2",
+					name: "PostgreSQL",
+					aliases: [],
+					tags: ["database"],
+					status: "active",
+					createdAt: "2026-01-01T00:00:00Z",
+					updatedAt: "2026-01-01T00:00:00Z",
+				},
+			]);
 
 			const { data, error } = await client.api.keywords.get({ query: { tag: "frontend" } });
 
@@ -119,21 +109,15 @@ describe("Keywords API", () => {
 
 	describe("GET /api/keywords/:id", () => {
 		it("should return keyword by id", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"kw1",
-					"React",
-					'["ReactJS"]',
-					'["frontend"]',
-					"active",
-					"2026-01-01T00:00:00Z",
-					"2026-01-01T00:00:00Z",
-				)
-				.run();
+			await db.insert(keywords).values({
+				id: "kw1",
+				name: "React",
+				aliases: ["ReactJS"],
+				tags: ["frontend"],
+				status: "active",
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+			});
 
 			const { data, error } = await client.api.keywords({ id: "kw1" }).get();
 
@@ -202,13 +186,15 @@ describe("Keywords API", () => {
 
 	describe("PUT /api/keywords/:id", () => {
 		it("should update keyword", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind("kw1", "React", "[]", "[]", "active", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z")
-				.run();
+			await db.insert(keywords).values({
+				id: "kw1",
+				name: "React",
+				aliases: [],
+				tags: [],
+				status: "active",
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+			});
 
 			const { data, error } = await client.api.keywords({ id: "kw1" }).put({
 				name: "React.js",
@@ -227,13 +213,15 @@ describe("Keywords API", () => {
 		});
 
 		it("should update keyword status", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind("kw1", "React", "[]", "[]", "active", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z")
-				.run();
+			await db.insert(keywords).values({
+				id: "kw1",
+				name: "React",
+				aliases: [],
+				tags: [],
+				status: "active",
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+			});
 
 			const { data, error } = await client.api.keywords({ id: "kw1" }).put({
 				status: "archived",
@@ -254,20 +242,22 @@ describe("Keywords API", () => {
 
 	describe("DELETE /api/keywords/:id", () => {
 		it("should archive keyword (soft delete)", async () => {
-			await db
-				.prepare(
-					`INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind("kw1", "React", "[]", "[]", "active", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z")
-				.run();
+			await db.insert(keywords).values({
+				id: "kw1",
+				name: "React",
+				aliases: [],
+				tags: [],
+				status: "active",
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+			});
 
 			const { status } = await client.api.keywords({ id: "kw1" }).delete();
 
 			expect(status).toBe(204);
 
 			// Verify keyword is archived, not deleted
-			const keyword = await db.prepare("SELECT * FROM keywords WHERE id = ?").bind("kw1").first();
+			const [keyword] = await db.select().from(keywords).where(sql`id = 'kw1'`).limit(1);
 			expect(keyword?.status).toBe("archived");
 		});
 

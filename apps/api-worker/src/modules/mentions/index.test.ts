@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { treaty } from "@elysiajs/eden";
 import app from "../..";
-import { db } from "../../lib/db";
+import { db, mentions } from "../../lib/db";
 
 const client = treaty(app);
 
 describe("Mentions API", () => {
 	beforeEach(async () => {
-		// Clean up database
-		await db.prepare("DELETE FROM mentions").run();
+		// Clean up database using Drizzle
+		await db.delete(mentions);
 	});
 
 	describe("GET /api/mentions", () => {
@@ -23,44 +23,33 @@ describe("Mentions API", () => {
 		});
 
 		it("should return paginated mentions", async () => {
-			// Insert test mentions
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Post 1",
-					"Content 1",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					null,
-					"Content 2",
-					"https://x.com/1",
-					"user2",
-					"2026-01-15T11:00:00Z",
-					"2026-01-16T11:00:00Z",
-					JSON.stringify(["kw2"]),
-				)
-				.run();
+			// Insert test mentions using Drizzle
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-15T10:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "x",
+					sourceId: "tweet1",
+					title: null,
+					content: "Content 2",
+					url: "https://x.com/1",
+					author: "user2",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T11:00:00Z",
+					matchedKeywords: ["kw2"],
+				},
+			]);
 
 			const { data, error } = await client.api.mentions.get();
 
@@ -73,43 +62,32 @@ describe("Mentions API", () => {
 		});
 
 		it("should filter by keywordId", async () => {
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Post 1",
-					"Content 1",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					null,
-					"Content 2",
-					"https://x.com/1",
-					"user2",
-					"2026-01-15T11:00:00Z",
-					"2026-01-16T11:00:00Z",
-					JSON.stringify(["kw2"]),
-				)
-				.run();
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-15T10:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "x",
+					sourceId: "tweet1",
+					title: null,
+					content: "Content 2",
+					url: "https://x.com/1",
+					author: "user2",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T11:00:00Z",
+					matchedKeywords: ["kw2"],
+				},
+			]);
 
 			const { data, error } = await client.api.mentions.get({
 				query: { keywordId: "kw1" },
@@ -121,43 +99,32 @@ describe("Mentions API", () => {
 		});
 
 		it("should filter by source", async () => {
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Post 1",
-					"Content 1",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					null,
-					"Content 2",
-					"https://x.com/1",
-					"user2",
-					"2026-01-15T11:00:00Z",
-					"2026-01-16T11:00:00Z",
-					JSON.stringify(["kw2"]),
-				)
-				.run();
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-15T10:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "x",
+					sourceId: "tweet1",
+					title: null,
+					content: "Content 2",
+					url: "https://x.com/1",
+					author: "user2",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T11:00:00Z",
+					matchedKeywords: ["kw2"],
+				},
+			]);
 
 			const { data, error } = await client.api.mentions.get({
 				query: { source: "reddit" },
@@ -169,43 +136,32 @@ describe("Mentions API", () => {
 		});
 
 		it("should filter by time range", async () => {
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Post 1",
-					"Content 1",
-					"https://reddit.com/1",
-					"user1",
-					"2026-01-14T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1"]),
-				)
-				.run();
-
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					null,
-					"Content 2",
-					"https://x.com/1",
-					"user2",
-					"2026-01-15T11:00:00Z",
-					"2026-01-16T11:00:00Z",
-					JSON.stringify(["kw2"]),
-				)
-				.run();
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-14T10:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "x",
+					sourceId: "tweet1",
+					title: null,
+					content: "Content 2",
+					url: "https://x.com/1",
+					author: "user2",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T11:00:00Z",
+					matchedKeywords: ["kw2"],
+				},
+			]);
 
 			const { data, error } = await client.api.mentions.get({
 				query: {
@@ -220,27 +176,45 @@ describe("Mentions API", () => {
 		});
 
 		it("should support pagination", async () => {
-			// Insert 3 mentions
-			for (let i = 1; i <= 3; i++) {
-				await db
-					.prepare(
-						`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-					)
-					.bind(
-						`m${i}`,
-						"reddit",
-						`post${i}`,
-						`Post ${i}`,
-						`Content ${i}`,
-						`https://reddit.com/${i}`,
-						"user1",
-						`2026-01-15T${10 + i}:00:00Z`,
-						"2026-01-16T10:00:00Z",
-						JSON.stringify(["kw1"]),
-					)
-					.run();
-			}
+			// Insert 3 mentions using Drizzle
+			await db.insert(mentions).values([
+				{
+					id: "m1",
+					source: "reddit",
+					sourceId: "post1",
+					title: "Post 1",
+					content: "Content 1",
+					url: "https://reddit.com/1",
+					author: "user1",
+					createdAt: "2026-01-15T11:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m2",
+					source: "reddit",
+					sourceId: "post2",
+					title: "Post 2",
+					content: "Content 2",
+					url: "https://reddit.com/2",
+					author: "user1",
+					createdAt: "2026-01-15T12:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+				{
+					id: "m3",
+					source: "reddit",
+					sourceId: "post3",
+					title: "Post 3",
+					content: "Content 3",
+					url: "https://reddit.com/3",
+					author: "user1",
+					createdAt: "2026-01-15T13:00:00Z",
+					fetchedAt: "2026-01-16T10:00:00Z",
+					matchedKeywords: ["kw1"],
+				},
+			]);
 
 			const { data, error } = await client.api.mentions.get({
 				query: { limit: 2, offset: 1 },
@@ -259,24 +233,18 @@ describe("Mentions API", () => {
 
 	describe("GET /api/mentions/:id", () => {
 		it("should return mention by id", async () => {
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"Test Post",
-					"Test content",
-					"https://reddit.com/1",
-					"testuser",
-					"2026-01-15T10:00:00Z",
-					"2026-01-16T10:00:00Z",
-					JSON.stringify(["kw1", "kw2"]),
-				)
-				.run();
+			await db.insert(mentions).values({
+				id: "m1",
+				source: "reddit",
+				sourceId: "post1",
+				title: "Test Post",
+				content: "Test content",
+				url: "https://reddit.com/1",
+				author: "testuser",
+				createdAt: "2026-01-15T10:00:00Z",
+				fetchedAt: "2026-01-16T10:00:00Z",
+				matchedKeywords: ["kw1", "kw2"],
+			});
 
 			const { data, error } = await client.api.mentions({ id: "m1" }).get();
 
