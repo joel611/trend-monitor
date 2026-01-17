@@ -89,6 +89,12 @@ src/
 └── index.ts                # Main Elysia app entry point
 ```
 
+### Key Endpoints
+```
+http://localhost:8787/openapi      # Scalar
+http://localhost:8787/openapi/json # OpenAPI Spec
+```
+
 ### Key Patterns
 
 1. **Repository Pattern**: All database access goes through repository classes (e.g., `KeywordsRepository`, `MentionsRepository`) using Drizzle ORM for type-safe queries and testability.
