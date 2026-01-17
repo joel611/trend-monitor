@@ -2,63 +2,52 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-<!-- OPENSPEC:START -->
-# OpenSpec Instructions
-
-These instructions are for AI assistants working in this project.
-
-Always open `@/openspec/AGENTS.md` when the request:
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
-
-Use `@/openspec/AGENTS.md` to learn:
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
-
-Keep this managed block so 'openspec update' can refresh the instructions.
-
-<!-- OPENSPEC:END -->
-
 ## Project Overview
 
 This is a serverless web dashboard for monitoring technical keywords and trends across Reddit, X (Twitter), and selected websites. The architecture uses:
 
 - **Frontend**: Pure SPA (React + Vite) deployed to Cloudflare Pages
-- **Backend**: ElysiaJS API on Cloudflare Workers
+- **Backend**: ElysiaJS API on Cloudflare Workers with Drizzle ORM
 - **Infrastructure**: Cloudflare D1 (SQLite), Queues, KV, and R2
-- **Monorepo**: Turborepo with apps/ and packages/ structure (not yet scaffolded)
+- **Monorepo**: Turborepo with apps/ and packages/ structure
+- **Package Manager**: Bun with workspaces
+- **Code Quality**: Biome for linting and formatting
 
 ## Project Status
 
-**This project is currently in the planning phase.** The codebase contains:
-- Complete PRD (`doc/prd.md`) and architecture documentation (`doc/architecture.md`)
+**Phase 1 (API Layer) is complete.** The codebase now contains:
+- Complete PRD (`docs/prd.md`) and architecture documentation (`docs/architecture.md`)
 - OpenSpec workflow for spec-driven development
-- No implementation code yet
+- **Implemented**: Full API layer with ElysiaJS on Cloudflare Workers
+  - Keywords CRUD endpoints
+  - Mentions repository and endpoints
+  - Trends service with growth calculation
+  - D1 database integration with Drizzle ORM and repository pattern
+  - Comprehensive test suite (unit + integration)
+- **Not yet implemented**: Ingestion workers, processor worker, aggregator worker, web frontend
 
 Before implementing features, always:
-1. Review `doc/prd.md` and `doc/architecture.md` for requirements and design
+1. Review `docs/prd.md` and `docs/architecture.md` for requirements and design
 2. Check `openspec/` for any existing specifications or change proposals
 3. Follow the OpenSpec workflow when creating new capabilities
 
 ## Planned Architecture
 
-### Monorepo Structure (to be created)
+### Monorepo Structure
 ```
 apps/
-├── web/                 # SPA frontend (React + Vite)
-├── api-worker/          # ElysiaJS API Worker
-├── ingestion-reddit/    # Reddit ingestion Worker
-├── ingestion-x/         # X (Twitter) ingestion Worker
-├── ingestion-feeds/     # RSS/JSON feeds ingestion Worker
-├── processor-worker/    # Queue consumer, writes mentions to D1
-└── aggregator-worker/   # Aggregates mentions into daily stats
+├── web/                 # SPA frontend (React + Vite + TanStack Router) [scaffolded]
+├── api-worker/          # ElysiaJS API Worker [✓ implemented]
+├── ingestion-reddit/    # Reddit ingestion Worker [scaffolded]
+├── ingestion-x/         # X (Twitter) ingestion Worker [scaffolded]
+├── ingestion-feeds/     # RSS/JSON feeds ingestion Worker [scaffolded]
+├── processor-worker/    # Queue consumer, writes mentions to D1 [scaffolded]
+└── aggregator-worker/   # Aggregates mentions into daily stats [scaffolded]
 
 packages/
-├── shared-types/        # Shared TypeScript types/interfaces
-├── shared-config/       # Shared configuration & constants
-└── shared-utils/        # Shared utilities (matching, time, etc.)
+├── types/               # Shared TypeScript types/interfaces [✓ implemented]
+├── config/              # Shared configuration & constants [scaffolded]
+└── utils/               # Shared utilities (matching, time, etc.) [scaffolded]
 ```
 
 ### Core Data Flow
@@ -69,6 +58,8 @@ packages/
 5. **SPA** → display trends, charts, and mention details
 
 ### Database Schema (D1)
+
+Schema is managed by Drizzle ORM. See `apps/api-worker/src/lib/db/schema.ts` for the schema definition.
 
 **keywords**
 - Stores monitored keywords with aliases and tags
@@ -84,6 +75,8 @@ packages/
 - Fields: id, date, keyword_id, source, mentions_count
 - Unique: (date, keyword_id, source)
 
+**Note**: Drizzle uses camelCase in TypeScript (e.g., `createdAt`), which is mapped to snake_case in the SQLite database (e.g., `created_at`).
+
 ## Key Design Principles
 
 1. **Event-driven ingestion**: Use Cloudflare Queues to decouple fetch from processing
@@ -92,22 +85,144 @@ packages/
 4. **Keyword matching**: Case-insensitive substring matching with alias support (basic for MVP)
 5. **Simple first**: Avoid over-engineering; start with <100 lines per feature
 
-## Development Workflow (when implementation begins)
+## Development Workflow
 
-### Initial Setup (not yet done)
+### Initial Setup
 ```bash
 # Install dependencies
 bun install
 
-# Set up Turborepo workspace
-# (commands to be defined when scaffolding)
+# Generate Cloudflare Worker types (for api-worker)
+cd apps/api-worker && bun run wrangler:types
 
-# Local D1 development
-# (wrangler commands to be defined)
+# Initialize local D1 database
+cd apps/api-worker
+wrangler d1 execute trend-monitor-local --local --file migrations/0001_init_schema.sql
 ```
 
-### Common Commands (to be defined)
-Development commands will be added here once the monorepo and build tooling are set up.
+### Common Commands
+
+**Root level (Turborepo):**
+```bash
+bun run dev              # Start all dev servers concurrently
+bun run build            # Build all packages and apps
+bun run typecheck        # Type check all workspaces
+bun run lint             # Lint all workspaces (Biome)
+bun run format:fix       # Auto-fix formatting (Biome)
+bun run test             # Run all tests
+bun run test:unit        # Run unit tests only
+bun run test:integration # Run integration tests only
+bun run test:watch       # Run tests in watch mode
+bun run test:coverage    # Run tests with coverage
+```
+
+**API Worker (apps/api-worker):**
+```bash
+cd apps/api-worker
+bun run dev              # Start local dev server (port 8787)
+bun test                 # Run tests
+bun run deploy           # Deploy to Cloudflare Workers
+
+# Database commands
+wrangler d1 execute trend-monitor-local --local --command "SELECT * FROM keywords"
+wrangler d1 execute trend-monitor-local --local --file migrations/0001_init_schema.sql
+```
+
+**Web App (apps/web):**
+```bash
+cd apps/web
+bun run dev              # Start Vite dev server
+bun run build            # Build for production
+bun run preview          # Preview production build
+```
+
+## Implemented Architecture (API Layer)
+
+### API Worker Structure
+
+The API worker (`apps/api-worker`) follows a modular architecture:
+
+```
+src/
+├── modules/              # Feature-based modules
+│   ├── keywords/         # Keywords CRUD
+│   │   ├── index.ts      # Routes (Elysia handlers)
+│   │   ├── repository.ts # DB access layer
+│   │   └── *.test.ts     # Tests
+│   ├── mentions/         # Mentions listing
+│   └── trends/           # Trends aggregation
+├── services/             # Cross-module business logic
+│   └── trends-service.ts # Growth calculation, aggregation
+├── lib/
+│   └── db/
+│       ├── schema.ts     # Drizzle schema definition
+│       ├── client.ts     # Drizzle client factory
+│       ├── index.ts      # Runtime DB binding with auto-detection
+│       └── mock.ts       # In-memory SQLite for tests
+└── index.ts              # Main Elysia app entry point
+```
+
+### Key Patterns
+
+1. **Drizzle ORM**: Type-safe database queries with schema-driven development and automatic type inference
+2. **Repository Pattern**: All database access goes through repository classes using Drizzle for testability
+3. **Dependency Injection via `.derive()`**: Routes inject repositories using Elysia's context
+4. **Mock Database**: Uses `bun:sqlite` (better-sqlite3) in-memory DB with Drizzle client for testing
+5. **Type Safety**: Drizzle schema types + shared types from `@trend-monitor/types` ensure full type safety
+6. **Service Layer**: Complex business logic lives in `services/` to keep routes thin
+
+### Testing
+
+Tests use:
+- `bun:sqlite` (better-sqlite3) for in-memory database
+- Drizzle ORM client for type-safe database operations
+- Eden Treaty client for type-safe API testing
+- Mock module setup in `test/mock-db.ts` that provides Drizzle client
+
+Run tests with `bun test` from the API worker directory or `bun run test` from root.
+
+### Database Schema (Implemented)
+
+The schema is defined using Drizzle ORM in `apps/api-worker/src/lib/db/schema.ts`:
+
+- **keywords**: id, name, aliases (JSON), tags (JSON), status, created_at, updated_at
+- **mentions**: id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords (JSON)
+- **daily_aggregates**: id, date, keyword_id, source, mentions_count (unique on date + keyword + source)
+
+Drizzle provides automatic type inference with `$inferSelect` and `$inferInsert` types. Column names use camelCase in TypeScript but are mapped to snake_case in the SQLite database.
+
+See `apps/api-worker/src/lib/db/schema.ts` for Drizzle schema and `apps/api-worker/migrations/` for SQL migrations.
+
+## Working with the Monorepo
+
+### Turborepo Configuration
+
+The project uses Turborepo for task orchestration. Key features:
+
+- **Task pipelines**: Build tasks run dependencies first (`dependsOn: ["^build"]`)
+- **Caching**: Test and lint tasks are cached for performance
+- **Parallel execution**: Independent tasks run concurrently
+- **Persistent tasks**: Dev servers (`dev`, `test:watch`) run continuously
+
+### Adding New Packages
+
+When creating new shared packages:
+
+1. Create under `packages/[name]/`
+2. Add to workspace in root `package.json`
+3. Export types and ensure `package.json` has proper exports
+4. Reference in dependent apps as `@trend-monitor/[name]`
+
+### Code Quality
+
+**Biome** (replacement for ESLint + Prettier) is configured at the root:
+
+- Tab indentation, 100 char line width
+- Runs on all TypeScript/JavaScript files
+- TailwindCSS class sorting enabled (warn level)
+- Git-aware (respects `.gitignore`)
+
+Use `bun run format:fix` to auto-fix, or `bun check` for the root-level Biome check.
 
 ## Important Considerations
 
@@ -126,18 +241,7 @@ Development commands will be added here once the monorepo and build tooling are 
 - **X**: Search queries/hashtags (API access dependent)
 - **Website feeds**: RSS/JSON feeds
 
-## OpenSpec Workflow
-
-This project uses OpenSpec for spec-driven development. Key points:
-
-- **Before new features**: Create change proposal in `openspec/changes/[change-id]/`
-- **Validate proposals**: Run `openspec validate [change-id] --strict --no-interactive`
-- **After deployment**: Archive changes to `openspec/changes/archive/`
-- **For clarification**: Always check `openspec/AGENTS.md` first
-
 ## References
 
 - Product Requirements: `docs/prd.md`
 - Architecture Design: `docs/architecture.md`
-- OpenSpec Guidelines: `openspec/AGENTS.md`
-- Project Conventions: `openspec/project.md`

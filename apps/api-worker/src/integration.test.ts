@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { treaty } from "@elysiajs/eden";
 import app from "./index";
-import { db } from "./lib/db";
+import { db, dailyAggregates, mentions, keywords } from "./lib/db";
 
 const client = treaty(app);
 
@@ -9,10 +9,10 @@ describe("API Integration Tests", () => {
 	let createdKeywordId: string;
 
 	beforeEach(async () => {
-		// Clean up database
-		await db.prepare("DELETE FROM daily_aggregates").run();
-		await db.prepare("DELETE FROM mentions").run();
-		await db.prepare("DELETE FROM keywords").run();
+		// Clean up database using Drizzle
+		await db.delete(dailyAggregates);
+		await db.delete(mentions);
+		await db.delete(keywords);
 	});
 
 	describe("Full workflow: create keyword -> list keywords -> update keyword -> delete keyword", () => {
@@ -57,12 +57,14 @@ describe("API Integration Tests", () => {
 			}).delete();
 			expect(deleteResponse.status).toBe(204);
 
-			// Verify keyword is archived
-			const archivedKeyword = await db
-				.prepare("SELECT * FROM keywords WHERE id = ?")
-				.bind(createdKeywordId)
-				.first();
-			expect(archivedKeyword?.status).toBe("archived");
+			// Verify keyword is archived using Drizzle
+			const { eq } = await import("drizzle-orm");
+			const archivedKeywords = await db
+				.select()
+				.from(keywords)
+				.where(eq(keywords.id, createdKeywordId))
+				.limit(1);
+			expect(archivedKeywords[0]?.status).toBe("archived");
 		});
 	});
 
@@ -91,30 +93,30 @@ describe("API Integration Tests", () => {
 				.split("T")[0];
 
 			// Add aggregates for React
-			await db
-				.prepare(
-					`INSERT INTO daily_aggregates (id, date, keyword_id, source, mentions_count)
-         VALUES (?, ?, ?, ?, ?)`,
-				)
-				.bind("da1", today, keyword1.data!.id, "reddit", 15)
-				.run();
+			await db.insert(dailyAggregates).values({
+				id: "da1",
+				date: today,
+				keywordId: keyword1.data!.id,
+				source: "reddit",
+				mentionsCount: 15,
+			});
 
-			await db
-				.prepare(
-					`INSERT INTO daily_aggregates (id, date, keyword_id, source, mentions_count)
-         VALUES (?, ?, ?, ?, ?)`,
-				)
-				.bind("da2", yesterday, keyword1.data!.id, "reddit", 10)
-				.run();
+			await db.insert(dailyAggregates).values({
+				id: "da2",
+				date: yesterday,
+				keywordId: keyword1.data!.id,
+				source: "reddit",
+				mentionsCount: 10,
+			});
 
 			// Add aggregates for Vue
-			await db
-				.prepare(
-					`INSERT INTO daily_aggregates (id, date, keyword_id, source, mentions_count)
-         VALUES (?, ?, ?, ?, ?)`,
-				)
-				.bind("da3", today, keyword2.data!.id, "x", 8)
-				.run();
+			await db.insert(dailyAggregates).values({
+				id: "da3",
+				date: today,
+				keywordId: keyword2.data!.id,
+				source: "x",
+				mentionsCount: 8,
+			});
 
 			// 3. Get trends overview
 			const trendsResponse = await client.api.trends.overview.get();
@@ -148,39 +150,27 @@ describe("API Integration Tests", () => {
 
 			// 2. Add mentions
 			const today = new Date().toISOString();
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, content, url, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m1",
-					"reddit",
-					"post1",
-					"TypeScript is great!",
-					"https://reddit.com/1",
-					today,
-					today,
-					JSON.stringify([keyword.data!.id]),
-				)
-				.run();
+			await db.insert(mentions).values({
+				id: "m1",
+				source: "reddit",
+				sourceId: "post1",
+				content: "TypeScript is great!",
+				url: "https://reddit.com/1",
+				createdAt: today,
+				fetchedAt: today,
+				matchedKeywords: [keyword.data!.id],
+			});
 
-			await db
-				.prepare(
-					`INSERT INTO mentions (id, source, source_id, content, url, created_at, fetched_at, matched_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.bind(
-					"m2",
-					"x",
-					"tweet1",
-					"Loving TypeScript",
-					"https://x.com/1",
-					today,
-					today,
-					JSON.stringify([keyword.data!.id]),
-				)
-				.run();
+			await db.insert(mentions).values({
+				id: "m2",
+				source: "x",
+				sourceId: "tweet1",
+				content: "Loving TypeScript",
+				url: "https://x.com/1",
+				createdAt: today,
+				fetchedAt: today,
+				matchedKeywords: [keyword.data!.id],
+			});
 
 			// 3. Get all mentions
 			const allMentions = await client.api.mentions.get({
@@ -298,22 +288,16 @@ describe("API Integration Tests", () => {
 			// Create 5 mentions
 			const today = new Date().toISOString();
 			for (let i = 0; i < 5; i++) {
-				await db
-					.prepare(
-						`INSERT INTO mentions (id, source, source_id, content, url, created_at, fetched_at, matched_keywords)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-					)
-					.bind(
-						`m${i}`,
-						"reddit",
-						`post${i}`,
-						`Content ${i}`,
-						`https://reddit.com/${i}`,
-						today,
-						today,
-						"[]",
-					)
-					.run();
+				await db.insert(mentions).values({
+					id: `m${i}`,
+					source: "reddit",
+					sourceId: `post${i}`,
+					content: `Content ${i}`,
+					url: `https://reddit.com/${i}`,
+					createdAt: today,
+					fetchedAt: today,
+					matchedKeywords: [],
+				});
 			}
 
 			// Get first page (limit 2)

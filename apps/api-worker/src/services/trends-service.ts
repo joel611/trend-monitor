@@ -99,7 +99,7 @@ export class TrendsService {
     ];
 
     if (params.source) {
-      conditions.push(eq(dailyAggregates.source, params.source));
+      conditions.push(eq(dailyAggregates.source, params.source as "reddit" | "x" | "feed"));
     }
 
     const result = await this.db

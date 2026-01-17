@@ -48,5 +48,5 @@ export const createMockDB = (): DbClient => {
     CREATE INDEX IF NOT EXISTS idx_daily_aggregates_keyword_id ON daily_aggregates(keyword_id);
   `);
 
-	return drizzle({ client: sqlite, schema });
+	return drizzle({ client: sqlite, schema }) as unknown as DbClient;
 };
