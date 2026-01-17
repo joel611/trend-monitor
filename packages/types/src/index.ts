@@ -52,5 +52,5 @@ export interface IngestionEvent {
 	fetchedAt: string;
 	metadata?: Record<string, unknown>;
 }
-export * from "./db";
+
 export * from "./api";
