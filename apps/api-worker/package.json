@@ -17,7 +17,10 @@
 		"lint": "biome check src",
 		"format": "biome check src",
 		"format:fix": "biome check --write src",
-		"wrangler:types": "wrangler types"
+		"wrangler:types": "wrangler types",
+		"db:generate": "drizzle-kit generate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^1.4.1",
