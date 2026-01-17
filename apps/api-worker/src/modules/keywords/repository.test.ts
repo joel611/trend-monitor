@@ -1,95 +1,17 @@
 // apps/api-worker/src/db/keywords-repository.test.ts
 import { describe, expect, test, beforeEach } from "bun:test";
 import { KeywordsRepository } from "./repository";
-import type { D1Database } from "@cloudflare/workers-types";
-import type { KeywordRow } from "@trend-monitor/types";
-
-// Mock D1 database
-function createMockDb(): D1Database {
-	const data = new Map<string, KeywordRow>();
-
-	return {
-		prepare: (query: string) => {
-			const bindMethod = (...params: any[]) => ({
-				first: async () => {
-					if (query.includes("SELECT * FROM keywords WHERE id = ?")) {
-						return data.get(params[0]) || null;
-					}
-					return null;
-				},
-				all: async () => {
-					if (query.includes("LIMIT")) {
-						// Handle pagination
-						const limitIndex = params.length - 2;
-						const offsetIndex = params.length - 1;
-						const limit = params[limitIndex];
-						const offset = params[offsetIndex];
-
-						const allRows = Array.from(data.values()).sort(
-							(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-						);
-
-						return {
-							results: allRows.slice(offset, offset + limit),
-						};
-					}
-					return { results: Array.from(data.values()) };
-				},
-				run: async () => {
-					if (query.includes("INSERT")) {
-						const [id, name, aliases, tags, status, created_at, updated_at] = params;
-						data.set(id, {
-							id,
-							name,
-							aliases,
-							tags,
-							status,
-							created_at,
-							updated_at,
-						});
-					} else if (query.includes("UPDATE keywords SET status = 'archived'")) {
-						const [updated_at, id] = params;
-						const existing = data.get(id);
-						if (existing) {
-							data.set(id, { ...existing, status: "archived", updated_at });
-						}
-					} else if (query.includes("UPDATE keywords SET")) {
-						// Handle general update with name
-						const id = params[params.length - 1];
-						const existing = data.get(id);
-						if (existing) {
-							let updated: KeywordRow = { ...existing };
-							// For simplicity, if the update contains "name = ?", the first param is the new name
-							if (query.includes("name = ?")) {
-								updated.name = params[0];
-							}
-							updated.updated_at = params[params.length - 2];
-							data.set(id, updated);
-						}
-					}
-					return { success: true };
-				},
-			});
-
-			return {
-				bind: bindMethod,
-				all: async () => ({
-					results: Array.from(data.values()),
-				}),
-			} as any;
-		},
-	} as any;
-}
+import { createMockDB } from "../../lib/db/mock";
+import type { DbClient } from "../../lib/db/client";
 
 describe("KeywordsRepository", () => {
-	let db: D1Database;
+	let db: DbClient;
 	let repo: KeywordsRepository;
 
 	beforeEach(() => {
-		db = createMockDb();
+		db = createMockDB();
 		repo = new KeywordsRepository(db);
 	});
-
 	describe("create", () => {
 		test("creates keyword with all fields", async () => {
 			const keyword = await repo.create({

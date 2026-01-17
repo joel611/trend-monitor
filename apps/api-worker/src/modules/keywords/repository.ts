@@ -1,9 +1,10 @@
-import type { D1Database } from "@cloudflare/workers-types";
-import { KeywordStatus, type Keyword, type KeywordRow } from "@trend-monitor/types";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import type { DbClient } from "../../lib/db/client";
+import { keywords, type Keyword, type InsertKeyword } from "../../lib/db/schema";
 
 export class KeywordsRepository {
-  constructor(private db: D1Database) {}
+  constructor(private db: DbClient) {}
 
   async create(input: {
     name: string;
@@ -18,21 +19,18 @@ export class KeywordsRepository {
     const id = randomUUID();
     const now = new Date().toISOString();
 
+    const newKeyword: InsertKeyword = {
+      id,
+      name: input.name.trim(),
+      aliases: input.aliases,
+      tags: input.tags,
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    };
+
     try {
-      await this.db
-        .prepare(
-          "INSERT INTO keywords (id, name, aliases, tags, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        )
-        .bind(
-          id,
-          input.name.trim(),
-          JSON.stringify(input.aliases),
-          JSON.stringify(input.tags),
-          "active",
-          now,
-          now
-        )
-        .run();
+      await this.db.insert(keywords).values(newKeyword);
     } catch (err) {
       throw new Error(
         `Failed to create keyword: ${err instanceof Error ? err.message : "Unknown error"}`
@@ -44,7 +42,7 @@ export class KeywordsRepository {
       name: input.name.trim(),
       aliases: input.aliases,
       tags: input.tags,
-      status: KeywordStatus.Active,
+      status: "active",
       createdAt: now,
       updatedAt: now,
     };
@@ -52,12 +50,13 @@ export class KeywordsRepository {
 
   async findById(id: string): Promise<Keyword | null> {
     try {
-      const row = await this.db
-        .prepare("SELECT * FROM keywords WHERE id = ?")
-        .bind(id)
-        .first<KeywordRow>();
+      const result = await this.db
+        .select()
+        .from(keywords)
+        .where(eq(keywords.id, id))
+        .limit(1);
 
-      return row ? this.rowToEntity(row) : null;
+      return result[0] || null;
     } catch (err) {
       throw new Error(
         `Failed to find keyword: ${err instanceof Error ? err.message : "Unknown error"}`
@@ -79,11 +78,13 @@ export class KeywordsRepository {
 
     try {
       const result = await this.db
-        .prepare("SELECT * FROM keywords ORDER BY created_at DESC LIMIT ? OFFSET ?")
-        .bind(limit, offset)
-        .all<KeywordRow>();
+        .select()
+        .from(keywords)
+        .orderBy(desc(keywords.createdAt))
+        .limit(limit)
+        .offset(offset);
 
-      return result.results.map((row) => this.rowToEntity(row));
+      return result;
     } catch (err) {
       throw new Error(
         `Failed to list keywords: ${err instanceof Error ? err.message : "Unknown error"}`
@@ -108,39 +109,30 @@ export class KeywordsRepository {
       throw new Error("Keyword name cannot be empty");
     }
 
-    const updates: string[] = [];
-    const params: any[] = [];
+    const updates: Partial<Keyword> = {};
 
     if (input.name !== undefined) {
-      updates.push("name = ?");
-      params.push(input.name.trim());
+      updates.name = input.name.trim();
     }
     if (input.aliases !== undefined) {
-      updates.push("aliases = ?");
-      params.push(JSON.stringify(input.aliases));
+      updates.aliases = input.aliases;
     }
     if (input.tags !== undefined) {
-      updates.push("tags = ?");
-      params.push(JSON.stringify(input.tags));
+      updates.tags = input.tags;
     }
     if (input.status !== undefined) {
-      updates.push("status = ?");
-      params.push(input.status);
+      updates.status = input.status;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) return existing;
 
-    updates.push("updated_at = ?");
-    params.push(new Date().toISOString());
-    params.push(id);
-
-    const query = "UPDATE keywords SET " + updates.join(", ") + " WHERE id = ?";
+    updates.updatedAt = new Date().toISOString();
 
     try {
       await this.db
-        .prepare(query)
-        .bind(...params)
-        .run();
+        .update(keywords)
+        .set(updates)
+        .where(eq(keywords.id, id));
     } catch (err) {
       throw new Error(
         `Failed to update keyword: ${err instanceof Error ? err.message : "Unknown error"}`
@@ -152,46 +144,19 @@ export class KeywordsRepository {
 
   async delete(id: string): Promise<boolean> {
     try {
-      const result = await this.db
-        .prepare("UPDATE keywords SET status = 'archived', updated_at = ? WHERE id = ?")
-        .bind(new Date().toISOString(), id)
-        .run();
+      await this.db
+        .update(keywords)
+        .set({
+          status: "archived",
+          updatedAt: new Date().toISOString()
+        })
+        .where(eq(keywords.id, id));
 
-      return result.success;
+      return true;
     } catch (err) {
       throw new Error(
         `Failed to delete keyword: ${err instanceof Error ? err.message : "Unknown error"}`
       );
     }
-  }
-
-  private rowToEntity(row: KeywordRow): Keyword {
-    let aliases: string[] = [];
-    let tags: string[] = [];
-
-    // Safe JSON parsing with fallbacks
-    try {
-      aliases = JSON.parse(row.aliases);
-    } catch (e) {
-      console.error("Failed to parse aliases JSON in keyword row:", row.id, e);
-      aliases = [];
-    }
-
-    try {
-      tags = JSON.parse(row.tags);
-    } catch (e) {
-      console.error("Failed to parse tags JSON in keyword row:", row.id, e);
-      tags = [];
-    }
-
-    return {
-      id: row.id,
-      name: row.name,
-      aliases,
-      tags,
-      status: row.status as KeywordStatus,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
   }
 }

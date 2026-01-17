@@ -1,27 +1,26 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
 import * as schema from "./schema";
 import type { DbClient } from "./client";
-import { sql } from "drizzle-orm";
 
 export const createMockDB = (): DbClient => {
-  const sqlite = new Database(":memory:");
+	const sqlite = new Database(":memory:");
 
-  // Initialize schema
-  sqlite.exec(`
+	// Initialize schema
+	sqlite.exec(`
     CREATE TABLE IF NOT EXISTS keywords (
       id TEXT PRIMARY KEY,
       name TEXT UNIQUE NOT NULL,
       aliases TEXT NOT NULL DEFAULT '[]',
       tags TEXT NOT NULL DEFAULT '[]',
-      status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'archived')),
+      status TEXT NOT NULL DEFAULT 'active',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS mentions (
       id TEXT PRIMARY KEY,
-      source TEXT NOT NULL CHECK(source IN ('reddit', 'x', 'feed')),
+      source TEXT NOT NULL,
       source_id TEXT NOT NULL,
       title TEXT,
       content TEXT NOT NULL,
@@ -40,7 +39,7 @@ export const createMockDB = (): DbClient => {
       id TEXT PRIMARY KEY,
       date TEXT NOT NULL,
       keyword_id TEXT NOT NULL,
-      source TEXT NOT NULL CHECK(source IN ('reddit', 'x', 'feed')),
+      source TEXT NOT NULL,
       mentions_count INTEGER NOT NULL DEFAULT 0,
       UNIQUE(date, keyword_id, source)
     );
@@ -49,5 +48,5 @@ export const createMockDB = (): DbClient => {
     CREATE INDEX IF NOT EXISTS idx_daily_aggregates_keyword_id ON daily_aggregates(keyword_id);
   `);
 
-  return drizzle(sqlite, { schema });
+	return drizzle({ client: sqlite, schema });
 };
