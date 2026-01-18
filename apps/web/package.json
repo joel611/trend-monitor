@@ -18,14 +18,19 @@
 		"format:fix": "biome check --write src"
 	},
 	"dependencies": {
+		"@base-ui/react": "^1.1.0",
 		"@elysiajs/eden": "^1.4.6",
 		"@tailwindcss/postcss": "^4.1.18",
 		"@tanstack/react-query": "latest",
 		"@tanstack/react-router": "latest",
 		"@trend-monitor/config": "workspace:*",
 		"@trend-monitor/types": "workspace:*",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-react": "^0.562.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
+		"tailwind-merge": "^3.4.0",
 		"tailwindcss": "^4.1.18"
 	},
 	"devDependencies": {
@@ -35,6 +40,7 @@
 		"@types/react-dom": "^19.0.0",
 		"@vitejs/plugin-react": "latest",
 		"happy-dom": "latest",
+		"tw-animate-css": "^1.4.0",
 		"typescript": "^5.7.0",
 		"vite": "^6.0.0"
 	}

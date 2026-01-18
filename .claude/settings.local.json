@@ -1,23 +1,24 @@
 {
-	"permissions": {
-		"allow": [
-			"Bash(bun run build)",
-			"Bash(bun:*)",
-			"Bash(bun --cwd packages/utils run build:*)",
-			"Bash(find:*)",
-			"Bash(xargs:*)",
-			"Skill(superpowers:subagent-driven-development)",
-			"Bash(git add:*)",
-			"Bash(git commit:*)",
-			"Bash(cat:*)",
-			"Skill(elysia-skill:elysia)",
-			"Bash(git worktree:*)",
-			"Skill(superpowers:*)"
-		]
-	},
-	"enabledPlugins": {
-		"playwright-e2e@joel-plugins": true,
-		"playwright@joel-plugins": true,
-		"elysia-specialist@joel-plugins": true
-	}
+  "permissions": {
+    "allow": [
+      "Bash(bun run build)",
+      "Bash(bun:*)",
+      "Bash(bun --cwd packages/utils run build:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Skill(elysia-skill:elysia)",
+      "Bash(git worktree:*)",
+      "Skill(superpowers:*)",
+      "Bash(bunx shadcn@latest add:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "playwright-e2e@joel-plugins": true,
+    "playwright@joel-plugins": true,
+    "elysia-specialist@joel-plugins": true
+  }
 }
