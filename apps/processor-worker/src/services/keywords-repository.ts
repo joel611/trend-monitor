@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
 import type { DbClient, Keyword } from "@trend-monitor/db";
 import { keywords } from "@trend-monitor/db";
+import { eq } from "drizzle-orm";
 
 export class KeywordsRepository {
 	constructor(private db: DbClient) {}

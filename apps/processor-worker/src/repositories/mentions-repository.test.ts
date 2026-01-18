@@ -1,6 +1,7 @@
-import { describe, expect, test, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
+import type { DbClient } from "@trend-monitor/db";
+import { createMockDB } from "@trend-monitor/db/mock";
 import { MentionsRepository } from "./mentions-repository";
-import { createMockDB, type DbClient } from "@trend-monitor/db";
 
 describe("MentionsRepository", () => {
 	let db: DbClient;

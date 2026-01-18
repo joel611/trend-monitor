@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { KeywordMatcher } from "./keyword-matcher";
 import type { Keyword } from "@trend-monitor/db";
+import { KeywordMatcher } from "./keyword-matcher";
 
 describe("KeywordMatcher", () => {
 	const matcher = new KeywordMatcher();

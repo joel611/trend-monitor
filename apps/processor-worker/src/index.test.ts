@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach, mock } from "bun:test";
-import worker from "./index";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { keywords, mentions } from "@trend-monitor/db";
 import type { IngestionEvent } from "@trend-monitor/types";
-import { mentions, keywords } from "@trend-monitor/db";
+import worker from "./index";
 import { db } from "./lib/db";
 import { KeywordsRepository } from "./services/keywords-repository";
 
@@ -13,6 +13,7 @@ const createMockEnv = () => ({
 });
 
 describe("Processor Worker", () => {
+	// biome-ignore lint/suspicious/noExplicitAny: Test mock environment
 	let env: any;
 
 	beforeEach(async () => {

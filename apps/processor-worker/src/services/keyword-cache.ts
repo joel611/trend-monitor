@@ -8,7 +8,7 @@ export class KeywordCache {
 	private keywordsRepo: KeywordsRepository;
 
 	constructor(
-		private db: DbClient,
+		db: DbClient,
 		private kv: KVNamespace,
 	) {
 		this.keywordsRepo = new KeywordsRepository(db);

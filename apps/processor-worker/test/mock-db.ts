@@ -1,5 +1,5 @@
 import { mock } from "bun:test";
-import { createMockDB } from "@trend-monitor/db";
+import { createMockDB } from "@trend-monitor/db/mock";
 
 // Create a singleton mock DB instance
 const mockDb = createMockDB();

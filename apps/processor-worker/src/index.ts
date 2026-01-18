@@ -1,8 +1,8 @@
 import type { IngestionEvent } from "@trend-monitor/types";
 import { db } from "./lib/db";
+import { MentionsRepository } from "./repositories/mentions-repository";
 import { KeywordCache } from "./services/keyword-cache";
 import { KeywordMatcher } from "./services/keyword-matcher";
-import { MentionsRepository } from "./repositories/mentions-repository";
 
 interface Env {
 	DB: D1Database;

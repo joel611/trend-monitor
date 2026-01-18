@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { DbClient, Mention, InsertMention } from "@trend-monitor/db";
+import type { DbClient, InsertMention, Mention } from "@trend-monitor/db";
 import { mentions } from "@trend-monitor/db";
 
 export class MentionsRepository {

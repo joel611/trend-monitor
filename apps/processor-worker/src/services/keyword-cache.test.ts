@@ -1,6 +1,7 @@
-import { describe, expect, test, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+import type { DbClient } from "@trend-monitor/db";
+import { createMockDB } from "@trend-monitor/db/mock";
 import { KeywordCache } from "./keyword-cache";
-import { createMockDB, type DbClient } from "@trend-monitor/db";
 import { KeywordsRepository } from "./keywords-repository";
 
 // Mock KV namespace
@@ -11,6 +12,7 @@ const createMockKV = () => ({
 
 describe("KeywordCache", () => {
 	let db: DbClient;
+	// biome-ignore lint/suspicious/noExplicitAny: Test mock KV namespace
 	let kv: any;
 	let cache: KeywordCache;
 
