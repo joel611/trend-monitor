@@ -7,6 +7,7 @@
 		"dev": "wrangler dev",
 		"build": "tsc && wrangler deploy --dry-run",
 		"deploy": "wrangler deploy",
+		"wrangler:types": "wrangler types",
 		"test": "bun test --preload ./test/mock-db.ts",
 		"test:unit": "bun test --preload ./test/mock-db.ts",
 		"test:integration": "bun test --preload ./test/mock-db.ts",
