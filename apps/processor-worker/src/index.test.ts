@@ -1,11 +1,11 @@
 import { describe, expect, test, beforeEach, mock } from "bun:test";
 import worker from "./index";
 import type { IngestionEvent } from "@trend-monitor/types";
-import { createMockDB, mentions } from "@trend-monitor/db";
+import { mentions, keywords } from "@trend-monitor/db";
+import { db } from "./lib/db";
 import { KeywordsRepository } from "./services/keywords-repository";
 
-const createMockEnv = (db: any) => ({
-	DB: db,
+const createMockEnv = () => ({
 	KEYWORD_CACHE: {
 		get: mock(async () => null),
 		put: mock(async () => undefined),
@@ -13,12 +13,13 @@ const createMockEnv = (db: any) => ({
 });
 
 describe("Processor Worker", () => {
-	let db: any;
 	let env: any;
 
-	beforeEach(() => {
-		db = createMockDB();
-		env = createMockEnv(db);
+	beforeEach(async () => {
+		env = createMockEnv();
+		// Clear existing data from singleton DB
+		await db.delete(mentions);
+		await db.delete(keywords);
 	});
 
 	test("processes ingestion event and creates mention", async () => {
