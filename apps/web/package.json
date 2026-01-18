@@ -18,13 +18,14 @@
 		"format:fix": "biome check --write src"
 	},
 	"dependencies": {
-		"@trend-monitor/types": "workspace:*",
-		"@trend-monitor/config": "workspace:*",
-		"@tanstack/react-router": "latest",
+		"@tailwindcss/postcss": "^4.1.18",
 		"@tanstack/react-query": "latest",
+		"@tanstack/react-router": "latest",
+		"@trend-monitor/config": "workspace:*",
+		"@trend-monitor/types": "workspace:*",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
-		"@tailwindcss/postcss": "latest"
+		"tailwindcss": "^4.1.18"
 	},
 	"devDependencies": {
 		"@happy-dom/global-registrator": "^20.3.1",
