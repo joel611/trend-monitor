@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { StatsCard } from "../components/StatsCard";
 import { TrendsList } from "../components/TrendsList";
+import { SkeletonCard } from "../components/Skeleton";
 
 export const Route = createFileRoute("/")({
 	component: Overview,
@@ -20,8 +21,16 @@ function Overview() {
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="text-gray-500">Loading trends...</div>
+			<div className="space-y-6">
+				<div>
+					<h1 className="text-3xl font-bold text-gray-900">Trends Overview</h1>
+					<p className="mt-2 text-gray-600">Loading...</p>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+					<SkeletonCard />
+					<SkeletonCard />
+					<SkeletonCard />
+				</div>
 			</div>
 		);
 	}

@@ -13,6 +13,7 @@ import {
 	DialogTrigger,
 } from "../../components/ui/dialog";
 import { KeywordForm } from "../../components/KeywordForm";
+import { SkeletonTable } from "../../components/Skeleton";
 import type { CreateKeywordRequest } from "@trend-monitor/types";
 
 export const Route = createFileRoute("/keywords/")({
@@ -62,8 +63,14 @@ function Keywords() {
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="text-gray-500">Loading keywords...</div>
+			<div className="space-y-6">
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="text-3xl font-bold text-gray-900">Keywords</h1>
+						<p className="mt-2 text-gray-600">Loading...</p>
+					</div>
+				</div>
+				<SkeletonTable />
 			</div>
 		);
 	}
