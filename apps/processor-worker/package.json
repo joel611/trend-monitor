@@ -20,7 +20,9 @@
 	"dependencies": {
 		"@trend-monitor/types": "workspace:*",
 		"@trend-monitor/config": "workspace:*",
-		"@trend-monitor/utils": "workspace:*"
+		"@trend-monitor/utils": "workspace:*",
+		"@trend-monitor/db": "workspace:*",
+		"drizzle-orm": "^0.38.3"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "latest",
