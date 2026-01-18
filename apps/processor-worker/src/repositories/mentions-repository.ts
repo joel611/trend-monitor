@@ -37,6 +37,7 @@ export class MentionsRepository {
 				...newMention,
 				title: input.title || null,
 				author: input.author || null,
+				matchedKeywords: input.matchedKeywords,
 			};
 		} catch (err) {
 			// If unique constraint violation, return null (duplicate)
