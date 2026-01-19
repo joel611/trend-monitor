@@ -15,7 +15,9 @@
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check src",
 		"format": "biome check src",
-		"format:fix": "biome check --write src"
+		"format:fix": "biome check --write src",
+		"deploy:preview": "bun run build && wrangler pages deploy dist --project-name=trend-monitor-web",
+		"deploy:production": "bun run build && wrangler pages deploy dist --project-name=trend-monitor-web --branch=main"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.1.0",
