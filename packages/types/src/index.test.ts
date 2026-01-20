@@ -72,3 +72,23 @@ describe("IngestionEvent type", () => {
 		expect(event.metadata?.retweets).toBe(42);
 	});
 });
+
+describe("FeedSourceConfig", () => {
+	test("should accept valid feed configuration", () => {
+		const config: FeedSourceConfig = {
+			url: "https://www.reddit.com/r/programming/.rss",
+			name: "Reddit r/programming",
+		};
+		expect(config.url).toBe("https://www.reddit.com/r/programming/.rss");
+		expect(config.name).toBe("Reddit r/programming");
+	});
+
+	test("should accept feed with custom user agent", () => {
+		const config: FeedSourceConfig = {
+			url: "https://news.ycombinator.com/rss",
+			name: "Hacker News",
+			customUserAgent: "my-bot/1.0",
+		};
+		expect(config.customUserAgent).toBe("my-bot/1.0");
+	});
+});
