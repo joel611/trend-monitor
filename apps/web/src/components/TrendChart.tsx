@@ -25,7 +25,7 @@ export function TrendChart({ data }: TrendChartProps) {
 				<YAxis />
 				<Tooltip
 					labelFormatter={(value) => new Date(value).toLocaleDateString()}
-					formatter={(value: number) => [value, "Mentions"]}
+					formatter={(value: number | undefined) => [value ?? 0, "Mentions"]}
 				/>
 				<Line
 					type="monotone"

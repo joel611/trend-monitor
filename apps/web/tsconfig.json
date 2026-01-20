@@ -3,7 +3,9 @@
 	"compilerOptions": {
 		"jsx": "react-jsx",
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
-		"types": ["vite/client", "bun"],
+		"types": ["vite/client", "bun", "./worker-configuration.d.ts"],
+		"baseUrl": ".",
+		"skipLibCheck": true,
 		"paths": {
 			"@/*": ["./src/*"],
 			"@trend-monitor/types": ["../../packages/types/src"],
@@ -11,5 +13,5 @@
 		}
 	},
 	"include": ["src/**/*"],
-	"exclude": ["dist", "node_modules"]
+	"exclude": ["dist", "node_modules", "../api-worker"]
 }

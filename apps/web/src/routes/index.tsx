@@ -13,7 +13,7 @@ function Overview() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["trends", "overview"],
 		queryFn: async () => {
-			const response = await api.trends.overview.get();
+			const response = await api.api.trends.overview.get();
 			if (response.error) throw new Error("Failed to fetch trends");
 			return response.data;
 		},
@@ -58,31 +58,20 @@ function Overview() {
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<StatsCard title="Total Mentions" value={data.totalMentions} />
-				<StatsCard
-					title="Active Keywords"
-					value={data.topKeywords.length}
-				/>
-				<StatsCard
-					title="Emerging Topics"
-					value={data.emergingKeywords.length}
-				/>
+				<StatsCard title="Active Keywords" value={data.topKeywords.length} />
+				<StatsCard title="Emerging Topics" value={data.emergingKeywords.length} />
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				<TrendsList title="Top Keywords" keywords={data.topKeywords} />
-				<TrendsList
-					title="Emerging Keywords"
-					keywords={data.emergingKeywords}
-				/>
+				<TrendsList title="Emerging Keywords" keywords={data.emergingKeywords} />
 			</div>
 
 			{data.sourceBreakdown.length > 0 && (
 				<div className="bg-white rounded-lg shadow-md p-6">
-					<h2 className="text-lg font-semibold text-gray-900 mb-4">
-						Source Breakdown
-					</h2>
+					<h2 className="text-lg font-semibold text-gray-900 mb-4">Source Breakdown</h2>
 					<div className="space-y-3">
-						{data.sourceBreakdown.map((item) => (
+						{data.sourceBreakdown.map((item: { source: string; count: number }) => (
 							<div key={item.source} className="flex items-center justify-between">
 								<span className="text-gray-700 capitalize">{item.source}</span>
 								<span className="text-gray-900 font-medium">{item.count} mentions</span>

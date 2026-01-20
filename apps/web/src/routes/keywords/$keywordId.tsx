@@ -16,7 +16,7 @@ function KeywordDetail() {
 	const { data: keyword, isLoading: keywordLoading } = useQuery({
 		queryKey: ["keywords", keywordId],
 		queryFn: async () => {
-			const response = await api.keywords({ id: keywordId }).get();
+			const response = await api.api.keywords({ id: keywordId }).get();
 			if (response.error) throw new Error("Failed to fetch keyword");
 			return response.data;
 		},
@@ -25,7 +25,7 @@ function KeywordDetail() {
 	const { data: trend, isLoading: trendLoading } = useQuery({
 		queryKey: ["trends", keywordId],
 		queryFn: async () => {
-			const response = await api.trends({ keywordId }).get();
+			const response = await api.api.trends({ keywordId }).get();
 			if (response.error) throw new Error("Failed to fetch trend");
 			return response.data;
 		},
@@ -34,7 +34,7 @@ function KeywordDetail() {
 	const { data: mentions, isLoading: mentionsLoading } = useQuery({
 		queryKey: ["mentions", keywordId],
 		queryFn: async () => {
-			const response = await api.mentions.get({
+			const response = await api.api.mentions.get({
 				query: { keywordId, limit: 20 },
 			});
 			if (response.error) throw new Error("Failed to fetch mentions");
@@ -71,7 +71,7 @@ function KeywordDetail() {
 				</div>
 				{keyword.tags.length > 0 && (
 					<div className="flex flex-wrap gap-2 mt-2">
-						{keyword.tags.map((tag) => (
+						{keyword.tags.map((tag: string) => (
 							<Badge key={tag} variant="secondary">
 								{tag}
 							</Badge>
@@ -79,18 +79,14 @@ function KeywordDetail() {
 					</div>
 				)}
 				{keyword.aliases.length > 0 && (
-					<p className="mt-2 text-gray-600">
-						Aliases: {keyword.aliases.join(", ")}
-					</p>
+					<p className="mt-2 text-gray-600">Aliases: {keyword.aliases.join(", ")}</p>
 				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<Card className="p-6">
 					<div className="text-sm font-medium text-gray-500">Total Mentions</div>
-					<div className="mt-1 text-3xl font-semibold text-gray-900">
-						{trend.totalMentions}
-					</div>
+					<div className="mt-1 text-3xl font-semibold text-gray-900">{trend.totalMentions}</div>
 				</Card>
 				<Card className="p-6">
 					<div className="text-sm font-medium text-gray-500">Average per Day</div>
@@ -100,9 +96,7 @@ function KeywordDetail() {
 				</Card>
 				<Card className="p-6">
 					<div className="text-sm font-medium text-gray-500">Data Points</div>
-					<div className="mt-1 text-3xl font-semibold text-gray-900">
-						{trend.timeSeries.length}
-					</div>
+					<div className="mt-1 text-3xl font-semibold text-gray-900">{trend.timeSeries.length}</div>
 				</Card>
 			</div>
 

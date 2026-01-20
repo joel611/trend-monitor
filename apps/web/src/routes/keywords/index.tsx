@@ -27,7 +27,7 @@ function Keywords() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["keywords"],
 		queryFn: async () => {
-			const response = await api.keywords.get();
+			const response = await api.api.keywords.get();
 			if (response.error) throw new Error("Failed to fetch keywords");
 			return response.data;
 		},
@@ -35,7 +35,7 @@ function Keywords() {
 
 	const createMutation = useMutation({
 		mutationFn: async (data: CreateKeywordRequest) => {
-			const response = await api.keywords.post(data);
+			const response = await api.api.keywords.post(data);
 			if (response.error) throw new Error("Failed to create keyword");
 			return response.data;
 		},
@@ -47,7 +47,7 @@ function Keywords() {
 
 	const deleteMutation = useMutation({
 		mutationFn: async (id: string) => {
-			const response = await api.keywords({ id }).delete();
+			const response = await api.api.keywords({ id }).delete();
 			if (response.error) throw new Error("Failed to delete keyword");
 		},
 		onSuccess: () => {
@@ -88,14 +88,10 @@ function Keywords() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold text-gray-900">Keywords</h1>
-					<p className="mt-2 text-gray-600">
-						Manage your monitored keywords and their aliases
-					</p>
+					<p className="mt-2 text-gray-600">Manage your monitored keywords and their aliases</p>
 				</div>
 				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-					<DialogTrigger asChild>
-						<Button>Add Keyword</Button>
-					</DialogTrigger>
+					<DialogTrigger render={<Button />}>Add Keyword</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>Add New Keyword</DialogTitle>
