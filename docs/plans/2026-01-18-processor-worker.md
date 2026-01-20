@@ -13,112 +13,51 @@
 ## Task 1: Set up database access layer
 
 **Files:**
-- Create: `apps/processor-worker/src/lib/db/client.ts`
 - Create: `apps/processor-worker/src/lib/db/index.ts`
-- Create: `apps/processor-worker/src/lib/db/mock.ts`
 
-**Step 1: Create Drizzle client factory**
+**Rationale:** Use the shared `@trend-monitor/db` package instead of duplicating schema and client logic. This package provides:
+- Single source of truth for Drizzle schema
+- Shared client factory for D1Database wrapping
+- Mock DB for testing (via separate export path)
 
-Create `apps/processor-worker/src/lib/db/client.ts`:
-
-```typescript
-import { drizzle } from "drizzle-orm/d1";
-import type { D1Database } from "@cloudflare/workers-types";
-import { keywords, mentions } from "./schema";
-
-const schema = { keywords, mentions };
-
-export function createDbClient(d1: D1Database) {
-  return drizzle(d1, { schema });
-}
-
-export type DbClient = ReturnType<typeof createDbClient>;
-```
-
-**Step 2: Create runtime DB binding with auto-detection**
+**Step 1: Create runtime DB binding**
 
 Create `apps/processor-worker/src/lib/db/index.ts`:
 
 ```typescript
 import { env } from "cloudflare:workers";
-import { createDbClient } from "./client";
+import { createDbClient } from "@trend-monitor/db";
 
-// In tests, env.DB is already a Drizzle client from mock
-// In production, env.DB is a D1Database that needs wrapping
-const isAlreadyDrizzleClient = env.DB && typeof (env.DB as any).select === "function";
+// Create DB client from D1 binding
+export const db = createDbClient(env.DB);
 
-export const db = isAlreadyDrizzleClient ? (env.DB as any) : createDbClient(env.DB);
-export { createDbClient } from "./client";
-export type { DbClient } from "./client";
-export * from "./schema";
+// Re-export types and schema for convenience
+export * from "@trend-monitor/db";
 ```
 
-**Step 3: Create schema re-export**
+**Step 2: Update imports throughout processor worker**
 
-Create `apps/processor-worker/src/lib/db/schema.ts`:
-
+All database imports should now use:
 ```typescript
-// Re-export schema from api-worker for consistency
-export { keywords, mentions, type Keyword, type Mention, type InsertMention } from "../../../api-worker/src/lib/db/schema";
+// Import schema tables and types
+import { keywords, mentions, type Keyword, type Mention } from "@trend-monitor/db";
+
+// Import client factory if needed
+import { createDbClient } from "@trend-monitor/db";
+
+// Import mock for tests
+import { createMockDB } from "@trend-monitor/db/mock";
 ```
 
-**Step 4: Create mock DB for testing**
-
-Create `apps/processor-worker/src/lib/db/mock.ts`:
-
-```typescript
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { Database } from "bun:sqlite";
-import { keywords, mentions } from "./schema";
-import type { DbClient } from "./client";
-
-export const createMockDB = (): DbClient => {
-  const sqlite = new Database(":memory:");
-
-  // Initialize schema
-  sqlite.exec(`
-    CREATE TABLE IF NOT EXISTS keywords (
-      id TEXT PRIMARY KEY,
-      name TEXT UNIQUE NOT NULL,
-      aliases TEXT NOT NULL DEFAULT '[]',
-      tags TEXT NOT NULL DEFAULT '[]',
-      status TEXT NOT NULL DEFAULT 'active',
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS mentions (
-      id TEXT PRIMARY KEY,
-      source TEXT NOT NULL,
-      source_id TEXT NOT NULL,
-      title TEXT,
-      content TEXT NOT NULL,
-      url TEXT NOT NULL,
-      author TEXT,
-      created_at TEXT NOT NULL,
-      fetched_at TEXT NOT NULL,
-      matched_keywords TEXT NOT NULL DEFAULT '[]',
-      UNIQUE(source, source_id)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_mentions_created_at ON mentions(created_at);
-    CREATE INDEX IF NOT EXISTS idx_mentions_source ON mentions(source);
-  `);
-
-  return drizzle({ client: sqlite, schema: { keywords, mentions } }) as unknown as DbClient;
-};
-```
-
-**Step 5: Commit database setup**
+**Step 3: Commit database setup**
 
 ```bash
 git add apps/processor-worker/src/lib/db/
-git commit -m "feat(processor): add database access layer with Drizzle ORM
+git commit -m "feat(processor): use shared @trend-monitor/db package
 
-- Create client factory for D1Database
-- Add runtime binding with test auto-detection
-- Re-export schema from api-worker
-- Add mock DB for testing with in-memory SQLite
+- Use centralized Drizzle schema from shared package
+- Eliminate schema duplication across workers
+- Use shared client factory and mock DB
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ```
@@ -137,8 +76,7 @@ Create `apps/processor-worker/src/repositories/mentions-repository.test.ts`:
 ```typescript
 import { describe, expect, test, beforeEach } from "bun:test";
 import { MentionsRepository } from "./mentions-repository";
-import { createMockDB } from "../lib/db/mock";
-import type { DbClient } from "../lib/db/client";
+import { createMockDB, type DbClient } from "@trend-monitor/db/mock";
 import { randomUUID } from "node:crypto";
 
 describe("MentionsRepository", () => {
@@ -203,8 +141,7 @@ Create `apps/processor-worker/src/repositories/mentions-repository.ts`:
 
 ```typescript
 import { randomUUID } from "node:crypto";
-import type { DbClient } from "../lib/db/client";
-import { mentions, type Mention, type InsertMention } from "../lib/db/schema";
+import { mentions, type Mention, type InsertMention, type DbClient } from "@trend-monitor/db";
 
 export class MentionsRepository {
   constructor(private db: DbClient) {}
@@ -295,8 +232,7 @@ Create `apps/processor-worker/src/services/keyword-cache.test.ts`:
 ```typescript
 import { describe, expect, test, beforeEach, mock } from "bun:test";
 import { KeywordCache } from "./keyword-cache";
-import { createMockDB } from "../lib/db/mock";
-import type { DbClient } from "../lib/db/client";
+import { createMockDB, type DbClient } from "@trend-monitor/db/mock";
 import { KeywordsRepository } from "./keywords-repository";
 
 // Mock KV namespace
@@ -366,8 +302,7 @@ Create `apps/processor-worker/src/services/keywords-repository.ts`:
 
 ```typescript
 import { eq } from "drizzle-orm";
-import type { DbClient } from "../lib/db/client";
-import { keywords, type Keyword } from "../lib/db/schema";
+import { keywords, type Keyword, type DbClient } from "@trend-monitor/db";
 
 export class KeywordsRepository {
   constructor(private db: DbClient) {}
@@ -421,8 +356,7 @@ Expected: FAIL with "Cannot find module './keyword-cache'"
 Create `apps/processor-worker/src/services/keyword-cache.ts`:
 
 ```typescript
-import type { DbClient } from "../lib/db/client";
-import type { Keyword } from "../lib/db/schema";
+import type { Keyword, DbClient } from "@trend-monitor/db";
 import { KeywordsRepository } from "./keywords-repository";
 
 const CACHE_KEY = "active_keywords";
@@ -493,7 +427,7 @@ Create `apps/processor-worker/src/services/keyword-matcher.test.ts`:
 ```typescript
 import { describe, expect, test } from "bun:test";
 import { KeywordMatcher } from "./keyword-matcher";
-import type { Keyword } from "../lib/db/schema";
+import type { Keyword } from "@trend-monitor/db";
 
 describe("KeywordMatcher", () => {
   const matcher = new KeywordMatcher();
@@ -577,7 +511,7 @@ Expected: FAIL with "Cannot find module './keyword-matcher'"
 Create `apps/processor-worker/src/services/keyword-matcher.ts`:
 
 ```typescript
-import type { Keyword } from "../lib/db/schema";
+import type { Keyword } from "@trend-monitor/db";
 import { matchKeyword } from "@trend-monitor/utils";
 
 export class KeywordMatcher {
@@ -630,7 +564,7 @@ Create `apps/processor-worker/src/index.test.ts`:
 import { describe, expect, test, beforeEach, mock } from "bun:test";
 import worker from "./index";
 import type { IngestionEvent } from "@trend-monitor/types";
-import { createMockDB } from "./lib/db/mock";
+import { createMockDB } from "@trend-monitor/db/mock";
 import { KeywordsRepository } from "./services/keywords-repository";
 
 const createMockEnv = (db: any) => ({
@@ -684,7 +618,7 @@ describe("Processor Worker", () => {
     await worker.queue(batch, env);
 
     // Verify mention was created
-    const { mentions } = await import("./lib/db/schema");
+    const { mentions } = await import("@trend-monitor/db");
     const result = await db.select().from(mentions);
 
     expect(result.length).toBe(1);
@@ -719,7 +653,7 @@ describe("Processor Worker", () => {
     await worker.queue(batch, env);
 
     // Verify no mention was created
-    const { mentions } = await import("./lib/db/schema");
+    const { mentions } = await import("@trend-monitor/db");
     const result = await db.select().from(mentions);
 
     expect(result.length).toBe(0);
@@ -760,7 +694,7 @@ describe("Processor Worker", () => {
     await worker.queue(batch, env);
 
     // Verify only one mention exists
-    const { mentions } = await import("./lib/db/schema");
+    const { mentions } = await import("@trend-monitor/db");
     const result = await db.select().from(mentions);
 
     expect(result.length).toBe(1);
@@ -883,7 +817,7 @@ Create `apps/processor-worker/test/mock-db.ts`:
 
 ```typescript
 import { mock } from "bun:test";
-import { createMockDB } from "../src/lib/db/mock";
+import { createMockDB } from "@trend-monitor/db/mock";
 
 // Create a singleton mock DB instance
 const mockDb = createMockDB();
