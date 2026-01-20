@@ -1,29 +1,74 @@
 import type { IngestionEvent } from "@trend-monitor/types";
-import { Source } from "@trend-monitor/types";
+import { FeedClient } from "./lib/feed-client";
+import { SourceConfigRepository } from "./repositories/source-config-repository";
+import { CheckpointService } from "./services/checkpoint-service";
+import { IngestionService } from "./services/ingestion-service";
 
 interface Env {
 	INGESTION_QUEUE: Queue<IngestionEvent>;
 	DB: D1Database;
 	CHECKPOINT: KVNamespace;
+	FEED_USER_AGENT: string;
 }
 
 export default {
-	async scheduled(_event: ScheduledEvent, _env: Env, _ctx: ExecutionContext): Promise<void> {
-		console.log("Feeds ingestion running at:", new Date().toISOString());
+	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+		console.log("Feed ingestion running at:", new Date().toISOString());
 
-		// Example: Fetch RSS/JSON feed and publish to queue
-		const sampleEvent: IngestionEvent = {
-			source: Source.Feed,
-			sourceId: "sample-feed-entry",
-			title: "Sample Blog Post",
-			content: "Sample content from RSS feed",
-			url: "https://example.com/blog/sample-post",
-			author: "blog_author",
-			createdAt: new Date().toISOString(),
-			fetchedAt: new Date().toISOString(),
-		};
+		try {
+			// Initialize services
+			const feedClient = new FeedClient({
+				defaultUserAgent: env.FEED_USER_AGENT,
+			});
 
-		// await env.INGESTION_QUEUE.send(sampleEvent);
-		console.log("Would publish event:", sampleEvent);
+			const configRepo = new SourceConfigRepository(env.DB);
+			const checkpointService = new CheckpointService(env.CHECKPOINT);
+			const ingestionService = new IngestionService();
+
+			// Load active source configurations
+			const configs = await configRepo.getActiveConfigs();
+
+			if (configs.length === 0) {
+				console.log("No active feed source configurations found");
+				return;
+			}
+
+			console.log(`Processing ${configs.length} feed(s)`);
+
+			// Process each feed and collect events
+			const allEvents: IngestionEvent[] = [];
+
+			for (const configRow of configs) {
+				try {
+					const result = await ingestionService.processFeed(
+						configRow.id,
+						configRow.config.url,
+						feedClient,
+						checkpointService,
+						configRow.config.customUserAgent,
+					);
+
+					allEvents.push(...result.events);
+
+					console.log(
+						`Processed ${configRow.config.name}: ${result.events.length} new posts, checkpoint: ${result.newCheckpoint?.lastPublishedAt || "none"}`,
+					);
+				} catch (err) {
+					console.error(`Failed to process feed ${configRow.config.name}:`, err);
+					// Continue with other feeds
+				}
+			}
+
+			// Send events to queue in batch
+			if (allEvents.length > 0) {
+				await env.INGESTION_QUEUE.sendBatch(allEvents);
+				console.log(`Published ${allEvents.length} events to ingestion queue`);
+			} else {
+				console.log("No new posts found");
+			}
+		} catch (err) {
+			console.error("Feed ingestion failed:", err);
+			throw err;
+		}
 	},
 };
