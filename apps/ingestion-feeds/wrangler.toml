@@ -7,7 +7,7 @@ port = 8792
 inspector_port = 9235
 
 [triggers]
-crons = ["*/30 * * * *"]
+crons = ["*/15 * * * *"]
 
 [[queues.producers]]
 queue = "ingestion-queue"
@@ -21,3 +21,6 @@ database_id = "local"
 [[kv_namespaces]]
 binding = "CHECKPOINT"
 id = "local"
+
+[vars]
+FEED_USER_AGENT = "trend-monitor-feed-ingestion/1.0 (Cloudflare Workers)"
