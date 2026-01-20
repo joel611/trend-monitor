@@ -32,7 +32,15 @@ This is a serverless web dashboard for monitoring technical keywords and trends 
     - Stores mentions idempotently in D1
     - KV-cached keyword loading for performance
     - Comprehensive test suite (12 tests, all passing)
-- **Not yet implemented**: Ingestion workers, aggregator worker, web frontend
+  - **Feed Ingestion Worker** - Universal RSS/Atom feed ingestion
+    - No authentication required (public feeds)
+    - Supports Reddit, Hacker News, blogs, any RSS/Atom feed
+    - RSS 2.0 and Atom 1.0 format support using rss-parser
+    - Incremental fetching with KV checkpoints
+    - HTML to text conversion
+    - Per-feed custom user agent support
+    - Full test coverage (30 tests, all passing)
+- **Not yet implemented**: aggregator worker, web frontend
 
 Before implementing features, always:
 1. Review `docs/prd.md` and `docs/architecture.md` for requirements and design
@@ -46,9 +54,7 @@ Before implementing features, always:
 apps/
 ├── web/                 # SPA frontend (React + Vite + TanStack Router) [scaffolded]
 ├── api-worker/          # ElysiaJS API Worker [✓ implemented]
-├── ingestion-reddit/    # Reddit ingestion Worker [scaffolded]
-├── ingestion-x/         # X (Twitter) ingestion Worker [scaffolded]
-├── ingestion-feeds/     # RSS/JSON feeds ingestion Worker [scaffolded]
+├── ingestion-feeds/     # RSS/Atom feeds ingestion Worker (Reddit, X, HN, blogs) [✓ implemented]
 ├── processor-worker/    # Queue consumer, writes mentions to D1 [✓ implemented]
 └── aggregator-worker/   # Aggregates mentions into daily stats [scaffolded]
 
@@ -145,6 +151,14 @@ bun test                 # Run tests
 bun run deploy           # Deploy to Cloudflare Workers
 ```
 
+**Feed Ingestion Worker (apps/ingestion-feeds):**
+```bash
+cd apps/ingestion-feeds
+bun run dev              # Start local dev server (port 8789)
+bun test                 # Run tests
+bun run deploy           # Deploy to Cloudflare Workers
+```
+
 **Web App (apps/web):**
 ```bash
 cd apps/web
@@ -233,6 +247,36 @@ src/
 - Case-insensitive keyword matching using `@trend-monitor/utils`
 - Comprehensive test coverage (12 tests, all passing)
 
+### Feed Ingestion Worker Structure
+
+The feed ingestion worker (`apps/ingestion-feeds`) fetches RSS/Atom feeds and publishes events to the queue:
+
+```
+src/
+├── index.ts              # Scheduled handler entry point
+├── lib/
+│   ├── feed-parser.ts    # RSS/Atom parser using rss-parser
+│   ├── feed-client.ts    # Feed fetcher with user agent support
+│   └── html-to-text.ts   # HTML to plain text converter
+├── repositories/
+│   └── source-config-repository.ts  # Load feed configs from D1
+├── services/
+│   ├── checkpoint-service.ts        # KV-based checkpoint storage
+│   └── ingestion-service.ts         # Feed processing with checkpointing
+└── test/
+    └── integration.test.ts  # End-to-end integration tests
+```
+
+**Key Features:**
+- Cron-triggered (every 15 minutes) scheduled worker
+- Universal RSS 2.0 and Atom 1.0 feed support using `rss-parser` package
+- No authentication required - works with any public feed
+- KV-based checkpoints for incremental fetching (tracks last processed post)
+- HTML to plain text conversion for feed content
+- Per-feed custom User-Agent configuration
+- Supports Reddit, X/Twitter (via xcancel.com), Hacker News, blogs, and any RSS/Atom feed
+- Comprehensive test coverage (30 tests, all passing)
+
 ### Key Patterns
 
 1. **Shared Database Package**: Centralized Drizzle schema in `@trend-monitor/db` used by all workers
@@ -265,6 +309,10 @@ The schema is defined using Drizzle ORM in `packages/db/src/schema.ts`:
   - UNIQUE constraint on (source, source_id) for idempotent inserts
 - **daily_aggregates**: id, date, keyword_id, source, mentions_count
   - UNIQUE constraint on (date, keyword_id, source)
+- **source_configs**: id, type, config (JSON), enabled, created_at, updated_at
+  - Stores feed source configurations for ingestion worker
+  - type CHECK constraint ('feed', 'x')
+  - enabled CHECK constraint (0, 1)
 
 Drizzle provides automatic type inference with `$inferSelect` and `$inferInsert` types. Column names use camelCase in TypeScript but are mapped to snake_case in the SQLite database.
 

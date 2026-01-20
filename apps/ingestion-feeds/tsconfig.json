@@ -1,16 +1,18 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"types": ["@cloudflare/workers-types"],
+		"types": ["@cloudflare/workers-types", "@types/bun"],
 		"lib": ["ES2023"],
 		"moduleResolution": "bundler",
 		"noEmit": true,
 		"paths": {
 			"@trend-monitor/types": ["../../packages/types/src"],
 			"@trend-monitor/config": ["../../packages/config/src"],
-			"@trend-monitor/utils": ["../../packages/utils/src"]
+			"@trend-monitor/utils": ["../../packages/utils/src"],
+			"@trend-monitor/db": ["../../packages/db/src"],
+			"@trend-monitor/db/mock": ["../../packages/db/src/mock.ts"]
 		}
 	},
-	"include": ["src/**/*"],
-	"exclude": ["dist", "node_modules"]
+	"include": ["src/**/*.ts"],
+	"exclude": ["dist", "node_modules", "**/*.test.ts"]
 }

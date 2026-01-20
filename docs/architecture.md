@@ -29,9 +29,7 @@ Monorepo management is handled with Turborepo and a `apps/` + `packages/` layout
 ├─ apps/
 │  ├─ web/                 # SPA frontend
 │  ├─ api-worker/          # Elysia API Worker
-│  ├─ ingestion-reddit/    # Reddit ingestion Worker
-│  ├─ ingestion-x/         # X (Twitter) ingestion Worker
-│  ├─ ingestion-feeds/     # RSS/JSON feeds ingestion Worker
+│  ├─ ingestion-feeds/     # RSS/Atom feeds ingestion Worker (Reddit, X, HN, blogs)
 │  ├─ processor-worker/    # Queue consumer, writes mentions to D1
 │  └─ aggregator-worker/   # Aggregates mentions into daily stats
 └─ packages/
@@ -55,9 +53,10 @@ Monorepo management is handled with Turborepo and a `apps/` + `packages/` layout
     - `/api/mentions/**`
   - Optionally serves static SPA assets for production (if not using Pages separately).
 
-- `apps/ingestion-*`
-  - Each ingestion Worker focuses on one source (Reddit, X, feeds).
-  - Runs on a schedule; fetches external data; emits normalized events to a queue.
+- `apps/ingestion-feeds`
+  - Universal RSS/Atom feed ingestion Worker handling all sources (Reddit, X via xcancel.com, Hacker News, blogs).
+  - Runs on a schedule; fetches RSS/Atom feeds; emits normalized events to a queue.
+  - No authentication required - uses public RSS feeds.
 
 - `apps/processor-worker`
   - Queue consumer Worker.
@@ -167,9 +166,9 @@ Each ingestion Worker is responsible for a single source type.
 #### Common behavior
 
 - Triggered by Cron (e.g., every 5–15 minutes).
-- Reads configuration (subreddits, search queries, feed URLs) from D1 or KV.
-- Uses external APIs (Reddit, X, RSS/JSON) to fetch new content since last checkpoint.
-- Converts external data to a shared event schema.
+- Reads configured feed URLs from D1 (Reddit subreddits, X accounts via xcancel.com, Hacker News, blogs).
+- Fetches RSS/Atom feeds via HTTP (no authentication required).
+- Converts feed items to a shared event schema.
 - Publishes messages to a Cloudflare queue.
 
 #### Shared event schema
@@ -188,33 +187,26 @@ type IngestionEvent = {
 };
 ```
 
-#### Reddit ingestion
+#### Universal Feeds Ingestion
 
-- Reads:
-  - List of subreddits.
-  - Global search configuration.
-- Fetches:
-  - New posts and/or comments since last run.
-- Emits:
-  - `source = 'reddit'`, plus relevant metadata (e.g., subreddit, score, comments count).
+The `ingestion-feeds` worker is a universal RSS/Atom feed ingestion worker that handles all sources through public feeds:
 
-#### X ingestion
+**Supported Sources:**
+- **Reddit**: Subreddit RSS feeds (`https://www.reddit.com/r/{subreddit}/.rss`)
+  - Emits: `source = 'reddit'` with post title, content, author, link
+- **X/Twitter**: Account RSS feeds via xcancel.com proxy (`https://rss.xcancel.com/{username}/rss`)
+  - Emits: `source = 'x'` with tweet content, author, link
+- **Hacker News**: RSS feed (`https://news.ycombinator.com/rss`)
+  - Emits: `source = 'feed'` with story title, link, comments
+- **Blogs/News**: Any standard RSS 2.0 or Atom 1.0 feed
+  - Emits: `source = 'feed'` with article title, content, author, link
 
-- Reads:
-  - Search queries/hashtags to monitor.
-- Fetches:
-  - Tweets for each query, handling pagination and basic rate-limit awareness.
-- Emits:
-  - `source = 'x'`, with metadata like likes, retweets, etc. when available.
-
-#### Feeds ingestion
-
-- Reads:
-  - Feed URLs and labels.
-- Fetches:
-  - RSS/JSON entries.
-- Emits:
-  - `source = 'feed'`, metadata may include site name or category.
+**Architecture:**
+- Reads: Configured feed URLs from D1 database
+- Fetches: RSS/Atom XML feeds via HTTP (no authentication)
+- Parses: Both RSS 2.0 and Atom 1.0 formats with auto-detection
+- Checkpoints: Uses KV storage to track last processed post per feed
+- Emits: Normalized `IngestionEvent` messages to Cloudflare Queue
 
 ---
 
@@ -380,7 +372,7 @@ Unique constraint:
 
 ### 7.1 Security
 
-- External API tokens for Reddit/X stored as secrets in environment.
+- No external API tokens required (ingestion uses public RSS feeds).
 - Public API surface limited to read-only endpoints in MVP.
 - Admin/maintenance endpoints protected (e.g., by environment separation or IP restrictions).
 - CORS restricted to allowed origins (SPA domains).

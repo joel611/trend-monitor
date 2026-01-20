@@ -18,9 +18,11 @@
 		"format:fix": "biome check --write src"
 	},
 	"dependencies": {
-		"@trend-monitor/types": "workspace:*",
 		"@trend-monitor/config": "workspace:*",
-		"@trend-monitor/utils": "workspace:*"
+		"@trend-monitor/db": "workspace:*",
+		"@trend-monitor/types": "workspace:*",
+		"@trend-monitor/utils": "workspace:*",
+		"rss-parser": "^3.13.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "latest",

@@ -53,4 +53,11 @@ export interface IngestionEvent {
 	metadata?: Record<string, unknown>;
 }
 
+// RSS/Atom feed source configuration
+export interface FeedSourceConfig {
+	url: string; // RSS/Atom feed URL
+	name: string; // Display name for the feed (e.g., "Reddit r/programming", "Hacker News")
+	customUserAgent?: string; // Optional custom User-Agent for specific feeds
+}
+
 export * from "./api";
