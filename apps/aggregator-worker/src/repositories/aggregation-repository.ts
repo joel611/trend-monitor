@@ -1,6 +1,7 @@
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import type { DbClient } from "@trend-monitor/db";
 import { mentions, dailyAggregates } from "@trend-monitor/db";
+import { randomUUID } from "node:crypto";
 
 export class AggregationRepository {
 	constructor(private db: DbClient) {}
@@ -54,5 +55,37 @@ export class AggregationRepository {
 			const [date, keywordId, source] = key.split("|");
 			return { date, keywordId, source, count };
 		});
+	}
+
+	async upsertDailyAggregates(
+		stats: Array<{ date: string; keywordId: string; source: string; count: number }>,
+	): Promise<void> {
+		for (const stat of stats) {
+			// Check if aggregate exists
+			const existing = await this.db
+				.select()
+				.from(dailyAggregates)
+				.where(
+					sql`${dailyAggregates.date} = ${stat.date} AND ${dailyAggregates.keywordId} = ${stat.keywordId} AND ${dailyAggregates.source} = ${stat.source}`,
+				)
+				.limit(1);
+
+			if (existing.length > 0) {
+				// Update existing
+				await this.db
+					.update(dailyAggregates)
+					.set({ mentionsCount: stat.count })
+					.where(eq(dailyAggregates.id, existing[0].id));
+			} else {
+				// Insert new
+				await this.db.insert(dailyAggregates).values({
+					id: randomUUID(),
+					date: stat.date,
+					keywordId: stat.keywordId,
+					source: stat.source as "reddit" | "x" | "feed",
+					mentionsCount: stat.count,
+				});
+			}
+		}
 	}
 }
