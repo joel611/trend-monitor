@@ -52,7 +52,7 @@ Before implementing features, always:
 ### Monorepo Structure
 ```
 apps/
-├── web/                 # SPA frontend (React + Vite + TanStack Router) [scaffolded]
+├── web/                 # SPA frontend (React + Vite + TanStack Router) [✓ implemented]
 ├── api-worker/          # ElysiaJS API Worker [✓ implemented]
 ├── ingestion-feeds/     # RSS/Atom feeds ingestion Worker (Reddit, X, HN, blogs) [✓ implemented]
 ├── processor-worker/    # Queue consumer, writes mentions to D1 [✓ implemented]
