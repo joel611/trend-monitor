@@ -46,6 +46,18 @@ export const createMockDB = (): DbClient => {
 
     CREATE INDEX IF NOT EXISTS idx_daily_aggregates_date ON daily_aggregates(date);
     CREATE INDEX IF NOT EXISTS idx_daily_aggregates_keyword_id ON daily_aggregates(keyword_id);
+
+    CREATE TABLE IF NOT EXISTS source_configs (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL CHECK (type IN ('feed', 'x')),
+      config TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_source_configs_type ON source_configs(type);
+    CREATE INDEX IF NOT EXISTS idx_source_configs_enabled ON source_configs(enabled);
   `);
 
 	return drizzle({ client: sqlite, schema }) as unknown as DbClient;
