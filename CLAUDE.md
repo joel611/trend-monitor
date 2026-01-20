@@ -46,9 +46,7 @@ Before implementing features, always:
 apps/
 ├── web/                 # SPA frontend (React + Vite + TanStack Router) [scaffolded]
 ├── api-worker/          # ElysiaJS API Worker [✓ implemented]
-├── ingestion-reddit/    # Reddit ingestion Worker [scaffolded]
-├── ingestion-x/         # X (Twitter) ingestion Worker [scaffolded]
-├── ingestion-feeds/     # RSS/JSON feeds ingestion Worker [scaffolded]
+├── ingestion-feeds/     # RSS/Atom feeds ingestion Worker (Reddit, X, HN, blogs) [scaffolded]
 ├── processor-worker/    # Queue consumer, writes mentions to D1 [✓ implemented]
 └── aggregator-worker/   # Aggregates mentions into daily stats [scaffolded]
 

@@ -311,13 +311,20 @@ This product is a web‑based dashboard that tracks technical topics and keyword
 
 ## 8. Ingestion & Processing (Cloudflare Workers + Queues)
 
-### 8.1 Ingestion Workers
+### 8.1 Ingestion Worker
 
-Each source has a dedicated Worker script (or shared code with different entrypoints):
+A universal RSS/Atom feeds ingestion Worker handles all sources:
 
 - Runs on Cron (e.g., every 5–15 minutes).
+- Sources supported:
+  - Reddit subreddits (via RSS feeds)
+  - X/Twitter accounts (via xcancel.com RSS proxy)
+  - Hacker News (via RSS feed)
+  - Blogs/news sites (via RSS/Atom feeds)
 - For each run:
-  - Fetches new data since last run (using stored checkpoints).
+  - Fetches RSS/Atom feeds from configured URLs.
+  - Parses feed items (supports RSS 2.0 and Atom 1.0).
+  - Uses KV-based checkpoints to fetch only new items.
   - Normalizes into a lightweight event:
     - `source`, `source_id`, `title`, `content`, `url`, `author`, `created_at`.
   - Publishes event to a Cloudflare Queue.
@@ -394,13 +401,13 @@ Each source has a dedicated Worker script (or shared code with different entrypo
 
 ### Phase 2 – Real Sources & Dashboard
 
-- Integrate Reddit and X ingestion Workers for real data.
+- Integrate universal feeds ingestion Worker for Reddit, X (via xcancel.com RSS), Hacker News, and blogs.
 - Implement aggregation into `daily_aggregates`.
 - Build full dashboard views (overview, keyword detail, management).
 - Add basic emerging keyword logic.
 
 ### Phase 3 – Polish & Extensions
 
-- Add more sources (feeds/HN/PH).
+- Add more feed sources (Product Hunt, GitHub trending, etc.).
 - Add notifications/digests.
 - Add multi‑user capabilities and auth if needed.
