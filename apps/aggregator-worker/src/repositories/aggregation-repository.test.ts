@@ -50,4 +50,61 @@ describe("AggregationRepository", () => {
 
 		expect(pending).toEqual(["2026-01-21"]);
 	});
+
+	test("getAggregationStatsForDate groups mentions by keyword and source", async () => {
+		await db.insert(mentions).values([
+			{
+				id: "m1",
+				source: "reddit",
+				sourceId: "r1",
+				content: "test",
+				url: "https://reddit.com/1",
+				createdAt: "2026-01-20T10:00:00Z",
+				fetchedAt: "2026-01-20T10:05:00Z",
+				matchedKeywords: ["k1", "k2"],
+			},
+			{
+				id: "m2",
+				source: "reddit",
+				sourceId: "r2",
+				content: "test",
+				url: "https://reddit.com/2",
+				createdAt: "2026-01-20T14:00:00Z",
+				fetchedAt: "2026-01-20T14:05:00Z",
+				matchedKeywords: ["k1"],
+			},
+			{
+				id: "m3",
+				source: "x",
+				sourceId: "x1",
+				content: "test",
+				url: "https://x.com/1",
+				createdAt: "2026-01-20T16:00:00Z",
+				fetchedAt: "2026-01-20T16:05:00Z",
+				matchedKeywords: ["k1"],
+			},
+		]);
+
+		const stats = await repo.getAggregationStatsForDate("2026-01-20");
+
+		expect(stats).toHaveLength(3);
+		expect(stats).toContainEqual({
+			date: "2026-01-20",
+			keywordId: "k1",
+			source: "reddit",
+			count: 2,
+		});
+		expect(stats).toContainEqual({
+			date: "2026-01-20",
+			keywordId: "k2",
+			source: "reddit",
+			count: 1,
+		});
+		expect(stats).toContainEqual({
+			date: "2026-01-20",
+			keywordId: "k1",
+			source: "x",
+			count: 1,
+		});
+	});
 });

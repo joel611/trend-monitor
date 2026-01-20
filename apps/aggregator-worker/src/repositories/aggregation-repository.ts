@@ -26,4 +26,33 @@ export class AggregationRepository {
 		// Return dates with mentions but no aggregates
 		return mentionDates.filter((date) => !aggregatedDates.has(date));
 	}
+
+	async getAggregationStatsForDate(
+		date: string,
+	): Promise<Array<{ date: string; keywordId: string; source: string; count: number }>> {
+		// Query mentions for this date
+		const result = await this.db
+			.select({
+				source: mentions.source,
+				matchedKeywords: mentions.matchedKeywords,
+			})
+			.from(mentions)
+			.where(sql`date(${mentions.createdAt}) = ${date}`);
+
+		// Flatten matched keywords and group by keyword + source
+		const groups = new Map<string, number>();
+
+		for (const row of result) {
+			for (const keywordId of row.matchedKeywords) {
+				const key = `${date}|${keywordId}|${row.source}`;
+				groups.set(key, (groups.get(key) || 0) + 1);
+			}
+		}
+
+		// Convert to array
+		return Array.from(groups.entries()).map(([key, count]) => {
+			const [date, keywordId, source] = key.split("|");
+			return { date, keywordId, source, count };
+		});
+	}
 }
