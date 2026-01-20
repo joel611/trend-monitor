@@ -15,16 +15,24 @@ This is a serverless web dashboard for monitoring technical keywords and trends 
 
 ## Project Status
 
-**Phase 1 (API Layer) is complete.** The codebase now contains:
+**Phase 1 (API Layer) and Phase 2 (Processor Worker) are complete.** The codebase now contains:
 - Complete PRD (`docs/prd.md`) and architecture documentation (`docs/architecture.md`)
 - OpenSpec workflow for spec-driven development
-- **Implemented**: Full API layer with ElysiaJS on Cloudflare Workers
-  - Keywords CRUD endpoints
-  - Mentions repository and endpoints
-  - Trends service with growth calculation
-  - D1 database integration with Drizzle ORM and repository pattern
-  - Comprehensive test suite (unit + integration)
-- **Not yet implemented**: Ingestion workers, processor worker, aggregator worker, web frontend
+- **Implemented**:
+  - **Shared Database Package** (`@trend-monitor/db`) with Drizzle ORM schema, client factory, and mock DB
+  - **API Worker** - Full API layer with ElysiaJS on Cloudflare Workers
+    - Keywords CRUD endpoints
+    - Mentions repository and endpoints
+    - Trends service with growth calculation
+    - D1 database integration with Drizzle ORM and repository pattern
+    - Comprehensive test suite (unit + integration)
+  - **Processor Worker** - Queue consumer with keyword matching
+    - Processes ingestion events from queue
+    - Matches keywords against content using shared utilities
+    - Stores mentions idempotently in D1
+    - KV-cached keyword loading for performance
+    - Comprehensive test suite (12 tests, all passing)
+- **Not yet implemented**: Ingestion workers, aggregator worker, web frontend
 
 Before implementing features, always:
 1. Review `docs/prd.md` and `docs/architecture.md` for requirements and design
@@ -41,13 +49,14 @@ apps/
 ├── ingestion-reddit/    # Reddit ingestion Worker [scaffolded]
 ├── ingestion-x/         # X (Twitter) ingestion Worker [scaffolded]
 ├── ingestion-feeds/     # RSS/JSON feeds ingestion Worker [scaffolded]
-├── processor-worker/    # Queue consumer, writes mentions to D1 [scaffolded]
+├── processor-worker/    # Queue consumer, writes mentions to D1 [✓ implemented]
 └── aggregator-worker/   # Aggregates mentions into daily stats [scaffolded]
 
 packages/
+├── db/                  # Shared Drizzle schema, client factory, mock DB [✓ implemented]
 ├── types/               # Shared TypeScript types/interfaces [✓ implemented]
-├── config/              # Shared configuration & constants [scaffolded]
-└── utils/               # Shared utilities (matching, time, etc.) [scaffolded]
+├── config/              # Shared configuration & constants [✓ implemented]
+└── utils/               # Shared utilities (matching, time, etc.) [✓ implemented]
 ```
 
 ### Core Data Flow
@@ -59,7 +68,7 @@ packages/
 
 ### Database Schema (D1)
 
-Schema is managed by Drizzle ORM. See `apps/api-worker/src/lib/db/schema.ts` for the schema definition.
+Schema is managed by Drizzle ORM in the shared `@trend-monitor/db` package. See `packages/db/src/schema.ts` for the schema definition.
 
 **keywords**
 - Stores monitored keywords with aliases and tags
@@ -128,6 +137,14 @@ wrangler d1 execute trend-monitor-local --local --command "SELECT * FROM keyword
 wrangler d1 execute trend-monitor-local --local --file migrations/0001_init_schema.sql
 ```
 
+**Processor Worker (apps/processor-worker):**
+```bash
+cd apps/processor-worker
+bun run dev              # Start local dev server (port 8788)
+bun test                 # Run tests
+bun run deploy           # Deploy to Cloudflare Workers
+```
+
 **Web App (apps/web):**
 ```bash
 cd apps/web
@@ -136,7 +153,37 @@ bun run build            # Build for production
 bun run preview          # Preview production build
 ```
 
-## Implemented Architecture (API Layer)
+## Implemented Architecture
+
+### Shared Database Package (`@trend-monitor/db`)
+
+The database layer is shared across all workers for consistency and maintainability:
+
+```
+packages/db/src/
+├── schema.ts             # Drizzle schema for keywords, mentions, daily_aggregates
+├── client.ts             # createDbClient() factory for D1Database
+├── mock.ts               # createMockDB() for testing (exported separately)
+└── index.ts              # Main exports (schema and client)
+```
+
+**Key Features:**
+- Single source of truth for database schema
+- Drizzle ORM with full TypeScript type inference
+- Separate mock export (`@trend-monitor/db/mock`) to avoid bundling test dependencies in production
+- Used by both api-worker and processor-worker
+
+**Usage in Workers:**
+```typescript
+// Import schema and types
+import { keywords, mentions, type Keyword } from "@trend-monitor/db";
+
+// Each worker creates its own runtime binding
+import { env } from "cloudflare:workers";
+import { createDbClient } from "@trend-monitor/db";
+
+const db = createDbClient(env.DB);
+```
 
 ### API Worker Structure
 
@@ -155,43 +202,73 @@ src/
 │   └── trends-service.ts # Growth calculation, aggregation
 ├── lib/
 │   └── db/
-│       ├── schema.ts     # Drizzle schema definition
-│       ├── client.ts     # Drizzle client factory
-│       ├── index.ts      # Runtime DB binding with auto-detection
-│       └── mock.ts       # In-memory SQLite for tests
+│       └── index.ts      # Runtime DB binding (uses @trend-monitor/db)
 └── index.ts              # Main Elysia app entry point
 ```
 
+### Processor Worker Structure
+
+The processor worker (`apps/processor-worker`) consumes queue messages and stores mentions:
+
+```
+src/
+├── index.ts              # Queue consumer entry point
+├── lib/
+│   └── db/
+│       └── index.ts      # Runtime DB binding (uses @trend-monitor/db)
+├── repositories/
+│   └── mentions-repository.ts  # Idempotent mention creation
+├── services/
+│   ├── keyword-cache.ts        # KV-cached keyword loading (5-min TTL)
+│   ├── keywords-repository.ts  # Keywords DB access
+│   └── keyword-matcher.ts      # Keyword matching logic
+└── test/
+    └── mock-db.ts        # Test mock setup with preload
+```
+
+**Key Features:**
+- Queue consumer pattern with batch processing
+- Idempotent mention creation (UNIQUE constraint on source + source_id)
+- KV-cached keyword loading for performance
+- Case-insensitive keyword matching using `@trend-monitor/utils`
+- Comprehensive test coverage (12 tests, all passing)
+
 ### Key Patterns
 
-1. **Drizzle ORM**: Type-safe database queries with schema-driven development and automatic type inference
-2. **Repository Pattern**: All database access goes through repository classes using Drizzle for testability
-3. **Dependency Injection via `.derive()`**: Routes inject repositories using Elysia's context
-4. **Mock Database**: Uses `bun:sqlite` (better-sqlite3) in-memory DB with Drizzle client for testing
+1. **Shared Database Package**: Centralized Drizzle schema in `@trend-monitor/db` used by all workers
+2. **Drizzle ORM**: Type-safe database queries with schema-driven development and automatic type inference
+3. **Repository Pattern**: All database access goes through repository classes using Drizzle for testability
+4. **Mock Database**: Uses `bun:sqlite` in-memory DB with Drizzle client for testing (imported from `@trend-monitor/db/mock`)
 5. **Type Safety**: Drizzle schema types + shared types from `@trend-monitor/types` ensure full type safety
 6. **Service Layer**: Complex business logic lives in `services/` to keep routes thin
+7. **Idempotent Processing**: UNIQUE constraints and proper error handling prevent duplicate data
 
 ### Testing
 
 Tests use:
-- `bun:sqlite` (better-sqlite3) for in-memory database
+- `bun:sqlite` for in-memory database (from `@trend-monitor/db/mock`)
 - Drizzle ORM client for type-safe database operations
-- Eden Treaty client for type-safe API testing
-- Mock module setup in `test/mock-db.ts` that provides Drizzle client
+- Eden Treaty client for type-safe API testing (api-worker)
+- Mock module setup with `--preload ./test/mock-db.ts` for proper isolation
+- Shared mock DB from `@trend-monitor/db/mock` ensures consistent test setup
 
-Run tests with `bun test` from the API worker directory or `bun run test` from root.
+**Running Tests:**
+- From specific worker: `cd apps/[worker-name] && bun run test`
+- From root: `bun run test` (runs all workspace tests via Turborepo)
 
 ### Database Schema (Implemented)
 
-The schema is defined using Drizzle ORM in `apps/api-worker/src/lib/db/schema.ts`:
+The schema is defined using Drizzle ORM in `packages/db/src/schema.ts`:
 
 - **keywords**: id, name, aliases (JSON), tags (JSON), status, created_at, updated_at
 - **mentions**: id, source, source_id, title, content, url, author, created_at, fetched_at, matched_keywords (JSON)
-- **daily_aggregates**: id, date, keyword_id, source, mentions_count (unique on date + keyword + source)
+  - UNIQUE constraint on (source, source_id) for idempotent inserts
+- **daily_aggregates**: id, date, keyword_id, source, mentions_count
+  - UNIQUE constraint on (date, keyword_id, source)
 
 Drizzle provides automatic type inference with `$inferSelect` and `$inferInsert` types. Column names use camelCase in TypeScript but are mapped to snake_case in the SQLite database.
 
-See `apps/api-worker/src/lib/db/schema.ts` for Drizzle schema and `apps/api-worker/migrations/` for SQL migrations.
+See `packages/db/src/schema.ts` for Drizzle schema and `apps/api-worker/migrations/` for SQL migrations.
 
 ## Working with the Monorepo
 

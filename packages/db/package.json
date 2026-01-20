@@ -1,0 +1,21 @@
+{
+	"name": "@trend-monitor/db",
+	"version": "0.0.1",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./mock": "./src/mock.ts",
+		"./*": "./src/*.ts"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.38.3"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250110.0",
+		"@types/bun": "latest",
+		"bun": "latest"
+	},
+	"peerDependencies": {
+		"@cloudflare/workers-types": "^4.20250110.0"
+	}
+}

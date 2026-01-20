@@ -7,11 +7,12 @@
 		"dev": "wrangler dev",
 		"build": "tsc && wrangler deploy --dry-run",
 		"deploy": "wrangler deploy",
-		"test": "bun test",
-		"test:unit": "bun test",
-		"test:integration": "bun test",
-		"test:watch": "bun test --watch",
-		"test:coverage": "bun test --coverage",
+		"wrangler:types": "wrangler types",
+		"test": "bun test --preload ./test/mock-db.ts",
+		"test:unit": "bun test --preload ./test/mock-db.ts",
+		"test:integration": "bun test --preload ./test/mock-db.ts",
+		"test:watch": "bun test --preload ./test/mock-db.ts --watch",
+		"test:coverage": "bun test --preload ./test/mock-db.ts --coverage",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check src",
 		"format": "biome check src",
@@ -20,7 +21,9 @@
 	"dependencies": {
 		"@trend-monitor/types": "workspace:*",
 		"@trend-monitor/config": "workspace:*",
-		"@trend-monitor/utils": "workspace:*"
+		"@trend-monitor/utils": "workspace:*",
+		"@trend-monitor/db": "workspace:*",
+		"drizzle-orm": "^0.38.3"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "latest",
