@@ -40,7 +40,12 @@ This is a serverless web dashboard for monitoring technical keywords and trends 
     - HTML to text conversion
     - Per-feed custom user agent support
     - Full test coverage (30 tests, all passing)
-- **Not yet implemented**: aggregator worker, web frontend
+  - **Aggregator Worker** - Scheduled aggregation of mentions
+    - Repository pattern for data access with Drizzle ORM
+    - Idempotent upsert logic for daily aggregates
+    - Service layer for aggregation business logic
+    - Comprehensive test suite (12 tests, all passing)
+- **Not yet implemented**: web frontend
 
 Before implementing features, always:
 1. Review `docs/prd.md` and `docs/architecture.md` for requirements and design
@@ -56,7 +61,7 @@ apps/
 ├── api-worker/          # ElysiaJS API Worker [✓ implemented]
 ├── ingestion-feeds/     # RSS/Atom feeds ingestion Worker (Reddit, X, HN, blogs) [✓ implemented]
 ├── processor-worker/    # Queue consumer, writes mentions to D1 [✓ implemented]
-└── aggregator-worker/   # Aggregates mentions into daily stats [scaffolded]
+└── aggregator-worker/   # Aggregates mentions into daily stats [✓ implemented]
 
 packages/
 ├── db/                  # Shared Drizzle schema, client factory, mock DB [✓ implemented]
