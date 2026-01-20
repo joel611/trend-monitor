@@ -61,7 +61,9 @@ export default {
 
 			// Send events to queue in batch
 			if (allEvents.length > 0) {
-				await env.INGESTION_QUEUE.sendBatch(allEvents);
+				await env.INGESTION_QUEUE.sendBatch(
+					allEvents.map((event) => ({ body: event })),
+				);
 				console.log(`Published ${allEvents.length} events to ingestion queue`);
 			} else {
 				console.log("No new posts found");

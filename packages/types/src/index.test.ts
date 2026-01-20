@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { IngestionEvent, Keyword } from "./index";
+import type { FeedSourceConfig, IngestionEvent, Keyword } from "./index";
 import { KeywordStatus, Source } from "./index";
 
 describe("KeywordStatus enum", () => {

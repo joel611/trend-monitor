@@ -87,8 +87,8 @@ describe("Feed Ingestion Worker", () => {
 		expect(mockEnv.INGESTION_QUEUE.sendBatch).toHaveBeenCalled();
 		const queueCall = (mockEnv.INGESTION_QUEUE.sendBatch as any).mock.calls[0][0];
 		expect(queueCall).toHaveLength(1);
-		expect(queueCall[0].sourceId).toBe("article-123");
-		expect(queueCall[0].title).toBe("Great Article");
+		expect(queueCall[0].body.sourceId).toBe("article-123");
+		expect(queueCall[0].body.title).toBe("Great Article");
 
 		globalThis.fetch = originalFetch;
 	});
