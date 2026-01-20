@@ -150,4 +150,72 @@ describe("AggregationRepository", () => {
 		expect(result[0].mentionsCount).toBe(10);
 		expect(result[0].id).toBe("a1"); // Same record
 	});
+
+	test("getPendingDateRanges returns empty array when no mentions exist", async () => {
+		const pending = await repo.getPendingDateRanges(7);
+		expect(pending).toEqual([]);
+	});
+
+	test("getPendingDateRanges handles partial aggregation", async () => {
+		// Insert mentions for multiple dates
+		await db.insert(mentions).values([
+			{
+				id: "m1",
+				source: "reddit",
+				sourceId: "r1",
+				content: "test",
+				url: "https://reddit.com/1",
+				createdAt: "2026-01-20T10:00:00Z",
+				fetchedAt: "2026-01-20T10:05:00Z",
+				matchedKeywords: ["k1"],
+			},
+			{
+				id: "m2",
+				source: "reddit",
+				sourceId: "r2",
+				content: "test",
+				url: "https://reddit.com/2",
+				createdAt: "2026-01-21T10:00:00Z",
+				fetchedAt: "2026-01-21T10:05:00Z",
+				matchedKeywords: ["k1"],
+			},
+		]);
+
+		// Partially aggregate (only 2026-01-20)
+		await db.insert(dailyAggregates).values({
+			id: "a1",
+			date: "2026-01-20",
+			keywordId: "k1",
+			source: "reddit",
+			mentionsCount: 1,
+		});
+
+		const pending = await repo.getPendingDateRanges(7);
+		expect(pending).toEqual(["2026-01-21"]);
+	});
+
+	test("getAggregationStatsForDate handles multiple keywords per mention", async () => {
+		await db.insert(mentions).values({
+			id: "m1",
+			source: "reddit",
+			sourceId: "r1",
+			content: "test",
+			url: "https://reddit.com/1",
+			createdAt: "2026-01-20T10:00:00Z",
+			fetchedAt: "2026-01-20T10:05:00Z",
+			matchedKeywords: ["k1", "k2", "k3"],
+		});
+
+		const stats = await repo.getAggregationStatsForDate("2026-01-20");
+
+		expect(stats).toHaveLength(3);
+		expect(stats.every((s) => s.count === 1)).toBe(true);
+	});
+
+	test("upsertDailyAggregates handles empty stats array", async () => {
+		await repo.upsertDailyAggregates([]);
+
+		const result = await db.select().from(dailyAggregates);
+		expect(result).toHaveLength(0);
+	});
 });
