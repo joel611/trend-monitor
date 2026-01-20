@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach } from "bun:test";
-import { mentions, dailyAggregates } from "@trend-monitor/db";
+import { beforeEach, describe, test } from "bun:test";
+import { dailyAggregates, mentions } from "@trend-monitor/db";
 import worker from "./index";
 import { db } from "./lib/db";
 

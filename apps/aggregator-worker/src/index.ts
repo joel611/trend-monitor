@@ -8,7 +8,7 @@ interface Env {
 }
 
 export default {
-	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+	async scheduled(event: ScheduledEvent, _env: Env, _ctx: ExecutionContext): Promise<void> {
 		console.log("Running aggregation at:", new Date(event.scheduledTime).toISOString());
 
 		try {

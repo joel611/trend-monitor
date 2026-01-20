@@ -1,9 +1,9 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { dailyAggregates, mentions } from "@trend-monitor/db";
 import { createMockDB } from "@trend-monitor/db/mock";
-import { mentions, dailyAggregates } from "@trend-monitor/db";
 import { sql } from "drizzle-orm";
-import { AggregationService } from "./aggregation-service";
 import { AggregationRepository } from "../repositories/aggregation-repository";
+import { AggregationService } from "./aggregation-service";
 
 describe("AggregationService", () => {
 	let db: ReturnType<typeof createMockDB>;

@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { dailyAggregates, keywords, mentions } from "@trend-monitor/db";
 import { createMockDB } from "@trend-monitor/db/mock";
-import { mentions, dailyAggregates, keywords } from "@trend-monitor/db";
 import { AggregationRepository } from "./repositories/aggregation-repository";
 import { AggregationService } from "./services/aggregation-service";
 
