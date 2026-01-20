@@ -12,7 +12,7 @@ interface Env {
 }
 
 export default {
-	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+	async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
 		console.log("Feed ingestion running at:", new Date().toISOString());
 
 		try {
@@ -61,9 +61,7 @@ export default {
 
 			// Send events to queue in batch
 			if (allEvents.length > 0) {
-				await env.INGESTION_QUEUE.sendBatch(
-					allEvents.map((event) => ({ body: event })),
-				);
+				await env.INGESTION_QUEUE.sendBatch(allEvents.map((event) => ({ body: event })));
 				console.log(`Published ${allEvents.length} events to ingestion queue`);
 			} else {
 				console.log("No new posts found");

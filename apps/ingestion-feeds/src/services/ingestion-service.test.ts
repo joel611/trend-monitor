@@ -1,9 +1,8 @@
-import { describe, test, expect, mock } from "bun:test";
-import { IngestionService } from "./ingestion-service";
+import { describe, expect, mock, test } from "bun:test";
 import { Source } from "@trend-monitor/types";
-import type { FeedPost } from "../lib/feed-client";
-import type { FeedClient } from "../lib/feed-client";
-import type { CheckpointService, Checkpoint } from "./checkpoint-service";
+import type { FeedClient, FeedPost } from "../lib/feed-client";
+import type { Checkpoint, CheckpointService } from "./checkpoint-service";
+import { IngestionService } from "./ingestion-service";
 
 describe("IngestionService", () => {
 	const service = new IngestionService();
@@ -199,9 +198,6 @@ describe("IngestionService - Process Feed", () => {
 			"custom-bot/1.0",
 		);
 
-		expect(mockClient.fetchFeed).toHaveBeenCalledWith(
-			"https://example.com/rss",
-			"custom-bot/1.0",
-		);
+		expect(mockClient.fetchFeed).toHaveBeenCalledWith("https://example.com/rss", "custom-bot/1.0");
 	});
 });

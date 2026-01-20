@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach, mock } from "bun:test";
 import { Database } from "bun:sqlite";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import worker from "./index";
 
 describe("Feed Ingestion Worker", () => {

@@ -1,4 +1,4 @@
-import { FeedParser, type FeedItem } from "./feed-parser";
+import { type FeedItem, FeedParser } from "./feed-parser";
 import { htmlToText } from "./html-to-text";
 
 export interface FeedClientConfig {

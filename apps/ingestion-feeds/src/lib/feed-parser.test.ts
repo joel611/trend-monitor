@@ -1,5 +1,5 @@
-import { describe, test, expect } from "bun:test";
-import { FeedParser, type FeedItem } from "./feed-parser";
+import { describe, expect, test } from "bun:test";
+import { FeedParser } from "./feed-parser";
 
 describe("FeedParser - RSS 2.0", () => {
 	const parser = new FeedParser();

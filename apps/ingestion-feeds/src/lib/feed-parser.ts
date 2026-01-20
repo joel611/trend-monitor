@@ -48,11 +48,7 @@ export class FeedParser {
 
 		// Extract content (prefer content, fall back to contentSnippet or description)
 		const content =
-			item.content ||
-			item["content:encoded"] ||
-			item.contentSnippet ||
-			item.description ||
-			"";
+			item.content || item["content:encoded"] || item.contentSnippet || item.description || "";
 
 		return {
 			title: item.title || "",

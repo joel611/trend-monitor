@@ -14,7 +14,8 @@
       "Bash(git worktree:*)",
       "Skill(superpowers:*)",
       "Bash(bunx shadcn@latest add:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(bunx wrangler d1 execute:*)"
     ]
   },
   "enabledPlugins": {

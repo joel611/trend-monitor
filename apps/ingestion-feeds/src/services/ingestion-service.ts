@@ -1,7 +1,7 @@
 import type { IngestionEvent } from "@trend-monitor/types";
 import { Source } from "@trend-monitor/types";
-import type { FeedPost, FeedClient } from "../lib/feed-client";
-import type { CheckpointService, Checkpoint } from "./checkpoint-service";
+import type { FeedClient, FeedPost } from "../lib/feed-client";
+import type { Checkpoint, CheckpointService } from "./checkpoint-service";
 
 interface ProcessResult {
 	events: IngestionEvent[];

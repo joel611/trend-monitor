@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { SourceConfigRepository } from "./source-config-repository";
 
 describe("SourceConfigRepository", () => {
