@@ -9,38 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as R404RouteImport } from './routes/404'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
+import { Route as KeywordsKeywordIdRouteImport } from './routes/keywords/$keywordId'
 
+const R404Route = R404RouteImport.update({
+  id: '/404',
+  path: '/404',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KeywordsIndexRoute = KeywordsIndexRouteImport.update({
+  id: '/keywords/',
+  path: '/keywords/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KeywordsKeywordIdRoute = KeywordsKeywordIdRouteImport.update({
+  id: '/keywords/$keywordId',
+  path: '/keywords/$keywordId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/404': typeof R404Route
+  '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
+  '/keywords/': typeof KeywordsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/404': typeof R404Route
+  '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
+  '/keywords': typeof KeywordsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/404': typeof R404Route
+  '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
+  '/keywords/': typeof KeywordsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/404' | '/keywords/$keywordId' | '/keywords/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/404' | '/keywords/$keywordId' | '/keywords'
+  id: '__root__' | '/' | '/404' | '/keywords/$keywordId' | '/keywords/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R404Route: typeof R404Route
+  KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
+  KeywordsIndexRoute: typeof KeywordsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/404': {
+      id: '/404'
+      path: '/404'
+      fullPath: '/404'
+      preLoaderRoute: typeof R404RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/keywords/': {
+      id: '/keywords/'
+      path: '/keywords'
+      fullPath: '/keywords/'
+      preLoaderRoute: typeof KeywordsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/keywords/$keywordId': {
+      id: '/keywords/$keywordId'
+      path: '/keywords/$keywordId'
+      fullPath: '/keywords/$keywordId'
+      preLoaderRoute: typeof KeywordsKeywordIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R404Route: R404Route,
+  KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
+  KeywordsIndexRoute: KeywordsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
