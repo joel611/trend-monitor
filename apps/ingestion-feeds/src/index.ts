@@ -51,11 +51,28 @@ export default {
 
 					allEvents.push(...result.events);
 
+					// Record success - resets consecutive failures
+					await configRepo.recordSuccess(configRow.id);
+
 					console.log(
 						`Processed ${configRow.config.name}: ${result.events.length} new posts, checkpoint: ${result.newCheckpoint?.lastPublishedAt || "none"}`,
 					);
 				} catch (err) {
+					const errorMessage = err instanceof Error ? err.message : "Unknown error";
 					console.error(`Failed to process feed ${configRow.config.name}:`, err);
+
+					// Record failure - increments consecutive failures
+					await configRepo.recordFailure(configRow.id, errorMessage);
+
+					// Check if we need to auto-disable after 10 consecutive failures
+					const updatedConfig = await configRepo.findById(configRow.id);
+					if (updatedConfig && updatedConfig.consecutiveFailures >= 10) {
+						await configRepo.disable(configRow.id);
+						console.warn(
+							`Auto-disabled source ${configRow.config.name} after 10 consecutive failures`,
+						);
+					}
+
 					// Continue with other feeds
 				}
 			}

@@ -15,5 +15,5 @@ export const createMockDB = (): DbClient => {
 		migrationsFolder: path.join(__dirname, "../migrations"),
 	});
 
-	return db as unknown as DbClient;
+	return drizzle({ client: sqlite, schema }) as unknown as DbClient;
 };
