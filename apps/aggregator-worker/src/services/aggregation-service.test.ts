@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { dailyAggregates, mentions } from "@trend-monitor/db";
 import { createMockDB } from "@trend-monitor/db/mock";
 import { sql } from "drizzle-orm";
-import { AggregationRepository } from "../repositories/aggregation-repository";
+import { AggregationRepository } from "@trend-monitor/db/repositories";
 import { AggregationService } from "./aggregation-service";
 
 describe("AggregationService", () => {

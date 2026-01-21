@@ -1,8 +1,9 @@
 import type { IngestionEvent } from "@trend-monitor/types";
 import { FeedClient } from "./lib/feed-client";
-import { SourceConfigRepository } from "./repositories/source-config-repository";
+import { SourceConfigRepository } from "@trend-monitor/db/repositories";
 import { CheckpointService } from "./services/checkpoint-service";
 import { IngestionService } from "./services/ingestion-service";
+import { db } from "./lib/db";
 
 interface Env {
 	INGESTION_QUEUE: Queue<IngestionEvent>;
@@ -21,12 +22,12 @@ export default {
 				defaultUserAgent: env.FEED_USER_AGENT,
 			});
 
-			const configRepo = new SourceConfigRepository(env.DB);
+			const configRepo = new SourceConfigRepository(db);
 			const checkpointService = new CheckpointService(env.CHECKPOINT);
 			const ingestionService = new IngestionService();
 
 			// Load active source configurations
-			const configs = await configRepo.getActiveConfigs();
+			const configs = await configRepo.listEnabled();
 
 			if (configs.length === 0) {
 				console.log("No active feed source configurations found");

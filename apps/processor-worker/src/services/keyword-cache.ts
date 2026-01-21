@@ -1,5 +1,5 @@
 import type { DbClient, Keyword } from "@trend-monitor/db";
-import { KeywordsRepository } from "./keywords-repository";
+import { KeywordsRepository } from "@trend-monitor/db/repositories";
 
 const CACHE_KEY = "active_keywords";
 const CACHE_TTL = 300; // 5 minutes
@@ -22,7 +22,7 @@ export class KeywordCache {
 		}
 
 		// Cache miss - load from DB
-		const keywords = await this.keywordsRepo.findActive();
+		const keywords = await this.keywordsRepo.findAll();
 
 		// Update cache
 		await this.kv.put(CACHE_KEY, JSON.stringify(keywords), {

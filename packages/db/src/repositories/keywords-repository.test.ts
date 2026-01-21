@@ -1,8 +1,7 @@
-// apps/api-worker/src/db/keywords-repository.test.ts
 import { describe, expect, test, beforeEach } from "bun:test";
-import { KeywordsRepository } from "./repository";
-import { createMockDB } from "@trend-monitor/db/mock";
-import type { DbClient } from "@trend-monitor/db";
+import { KeywordsRepository } from "./keywords-repository";
+import { createMockDB } from "../mock";
+import type { DbClient } from "../index";
 
 describe("KeywordsRepository", () => {
 	let db: DbClient;
@@ -12,6 +11,7 @@ describe("KeywordsRepository", () => {
 		db = createMockDB();
 		repo = new KeywordsRepository(db);
 	});
+
 	describe("create", () => {
 		test("creates keyword with all fields", async () => {
 			const keyword = await repo.create({
@@ -144,6 +144,26 @@ describe("KeywordsRepository", () => {
 			const created = await repo.create({ name: "Test", aliases: [], tags: [] });
 			const deleted = await repo.delete(created.id);
 			expect(deleted).toBe(true);
+		});
+	});
+
+	describe("findAll", () => {
+		test("loads all active keywords", async () => {
+			await repo.create({ name: "Active1", aliases: [], tags: [] });
+			await repo.create({ name: "Active2", aliases: [], tags: [] });
+			const active3 = await repo.create({ name: "Active3", aliases: [], tags: [] });
+
+			// Archive one keyword
+			await repo.delete(active3.id);
+
+			const all = await repo.findAll();
+			expect(all.length).toBe(2);
+			expect(all.every((k) => k.status === "active")).toBe(true);
+		});
+
+		test("returns empty array when no active keywords", async () => {
+			const all = await repo.findAll();
+			expect(all).toEqual([]);
 		});
 	});
 

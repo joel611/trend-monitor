@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { KeywordsRepository } from "./repository";
+import { KeywordsRepository } from "@trend-monitor/db/repositories";
 import type {
 	CreateKeywordRequest,
 	UpdateKeywordRequest,

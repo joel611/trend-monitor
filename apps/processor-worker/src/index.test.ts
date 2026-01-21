@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { keywords, mentions } from "@trend-monitor/db";
+import { KeywordsRepository } from "@trend-monitor/db/repositories";
 import type { IngestionEvent } from "@trend-monitor/types";
 import worker from "./index";
 import { db } from "./lib/db";
-import { KeywordsRepository } from "./services/keywords-repository";
 
 const createMockEnv = () => ({
 	KEYWORD_CACHE: {

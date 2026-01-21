@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { dailyAggregates, keywords, mentions } from "@trend-monitor/db";
 import { createMockDB } from "@trend-monitor/db/mock";
-import { AggregationRepository } from "./repositories/aggregation-repository";
+import { AggregationRepository } from "@trend-monitor/db/repositories";
 import { AggregationService } from "./services/aggregation-service";
 
 describe("Aggregator Integration", () => {
