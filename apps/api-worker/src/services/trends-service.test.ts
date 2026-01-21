@@ -1,8 +1,7 @@
 import { describe, expect, test, beforeEach } from "bun:test";
 import { TrendsService } from "./trends-service";
-import { createMockDB } from "../lib/db/mock";
-import type { DbClient } from "../lib/db/client";
-import { keywords, dailyAggregates } from "../lib/db/schema";
+import { createMockDB } from "@trend-monitor/db/mock";
+import { keywords, dailyAggregates, type DbClient } from "@trend-monitor/db";
 
 describe("TrendsService", () => {
   let db: DbClient;

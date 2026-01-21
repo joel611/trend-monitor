@@ -1,7 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import type { DbClient } from "../../lib/db/client";
-import { keywords, type Keyword, type InsertKeyword } from "../../lib/db/schema";
+import { keywords, type Keyword, type InsertKeyword, type DbClient } from "@trend-monitor/db";
 
 export class KeywordsRepository {
   constructor(private db: DbClient) {}

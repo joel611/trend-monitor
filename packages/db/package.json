@@ -8,12 +8,18 @@
 		"./*": "./src/*.ts"
 	},
 	"dependencies": {
-		"drizzle-orm": "^0.38.3"
+		"drizzle-orm": "^0.45.1"
+	},
+	"scripts": {
+		"db:generate": "drizzle-kit generate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250110.0",
 		"@types/bun": "latest",
-		"bun": "latest"
+		"bun": "latest",
+		"drizzle-kit": "^0.31.8"
 	},
 	"peerDependencies": {
 		"@cloudflare/workers-types": "^4.20250110.0"

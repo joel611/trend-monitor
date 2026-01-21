@@ -50,6 +50,16 @@ export const dailyAggregates = sqliteTable(
 	}),
 );
 
+// Source configurations table
+export const sourceConfigs = sqliteTable("source_configs", {
+	id: text("id").primaryKey(),
+	type: text("type", { enum: ["feed", "x"] }).notNull(),
+	config: text("config", { mode: "json" }).$type<Record<string, any>>().notNull(),
+	enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+	createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+	updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
 // Export types inferred from schema
 export type Keyword = typeof keywords.$inferSelect;
 export type InsertKeyword = typeof keywords.$inferInsert;
@@ -57,3 +67,5 @@ export type Mention = typeof mentions.$inferSelect;
 export type InsertMention = typeof mentions.$inferInsert;
 export type DailyAggregate = typeof dailyAggregates.$inferSelect;
 export type InsertDailyAggregate = typeof dailyAggregates.$inferInsert;
+export type SourceConfig = typeof sourceConfigs.$inferSelect;
+export type InsertSourceConfig = typeof sourceConfigs.$inferInsert;

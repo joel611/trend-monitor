@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { treaty } from "@elysiajs/eden";
 import app from "../..";
-import { db, mentions } from "../../lib/db";
+import { db } from "../../lib/db";
+import { mentions } from "@trend-monitor/db";
 
 const client = treaty(app);
 

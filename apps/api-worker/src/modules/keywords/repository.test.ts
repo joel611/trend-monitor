@@ -1,8 +1,8 @@
 // apps/api-worker/src/db/keywords-repository.test.ts
 import { describe, expect, test, beforeEach } from "bun:test";
 import { KeywordsRepository } from "./repository";
-import { createMockDB } from "../../lib/db/mock";
-import type { DbClient } from "../../lib/db/client";
+import { createMockDB } from "@trend-monitor/db/mock";
+import type { DbClient } from "@trend-monitor/db";
 
 describe("KeywordsRepository", () => {
 	let db: DbClient;

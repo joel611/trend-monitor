@@ -1,9 +1,8 @@
 // apps/api-worker/src/db/mentions-repository.test.ts
 import { describe, expect, test, beforeEach } from "bun:test";
 import { MentionsRepository } from "./repository";
-import { createMockDB } from "../../lib/db/mock";
-import type { DbClient } from "../../lib/db/client";
-import { mentions } from "../../lib/db/schema";
+import { createMockDB } from "@trend-monitor/db/mock";
+import { mentions, type DbClient } from "@trend-monitor/db";
 
 describe("MentionsRepository", () => {
 	let db: DbClient;

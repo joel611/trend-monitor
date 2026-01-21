@@ -8,7 +8,9 @@
 		"paths": {
 			"@trend-monitor/types": ["../../packages/types/src"],
 			"@trend-monitor/config": ["../../packages/config/src"],
-			"@trend-monitor/utils": ["../../packages/utils/src"]
+			"@trend-monitor/utils": ["../../packages/utils/src"],
+			"@trend-monitor/db": ["../../packages/db/src"],
+			"@trend-monitor/db/*": ["../../packages/db/src/*"]
 		}
 	},
 	"include": ["src/**/*"],

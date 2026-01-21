@@ -1,6 +1,5 @@
 import { eq, gte, lte, and, sum, sql, desc } from "drizzle-orm";
-import type { DbClient } from "../lib/db/client";
-import { dailyAggregates, keywords } from "../lib/db/schema";
+import { dailyAggregates, keywords, type DbClient } from "@trend-monitor/db";
 import type {
   TrendsOverviewResponse,
   KeywordTrendResponse,

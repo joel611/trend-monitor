@@ -17,15 +17,13 @@
 		"lint": "biome check src",
 		"format": "biome check src",
 		"format:fix": "biome check --write src",
-		"wrangler:types": "wrangler types",
-		"db:generate": "drizzle-kit generate",
-		"db:push": "drizzle-kit push",
-		"db:studio": "drizzle-kit studio"
+		"wrangler:types": "wrangler types"
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^1.4.1",
 		"@elysiajs/openapi": "^1.4.13",
 		"@trend-monitor/config": "workspace:*",
+		"@trend-monitor/db": "workspace:*",
 		"@trend-monitor/types": "workspace:*",
 		"@trend-monitor/utils": "workspace:*",
 		"add": "^2.0.6",
@@ -38,7 +36,6 @@
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/bun": "latest",
 		"better-sqlite3": "^12.6.0",
-		"drizzle-kit": "^0.31.8",
 		"typescript": "^5.7.0",
 		"wrangler": "latest"
 	}

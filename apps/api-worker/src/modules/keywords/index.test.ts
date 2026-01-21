@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { treaty } from "@elysiajs/eden";
 import app from "../..";
 import { db } from "../../lib/db";
-import { keywords } from "../../lib/db/schema";
+import { keywords } from "@trend-monitor/db";
 import { sql } from "drizzle-orm";
 
 const client = treaty(app);

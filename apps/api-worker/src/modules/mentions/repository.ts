@@ -1,7 +1,6 @@
 import { eq, and, gte, lte, like, desc, count, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import type { DbClient } from "../../lib/db/client";
-import { mentions, type Mention, type InsertMention } from "../../lib/db/schema";
+import { mentions, type Mention, type InsertMention, type DbClient } from "@trend-monitor/db";
 
 export interface MentionFilters {
   keywordId?: string;
