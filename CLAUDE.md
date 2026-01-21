@@ -117,7 +117,7 @@ cd apps/api-worker && bun run wrangler:types
 
 # Initialize local D1 database
 cd apps/api-worker
-wrangler d1 execute trend-monitor-local --local --file migrations/0001_init_schema.sql
+bun wrangler:migrate:local
 ```
 
 ### Common Commands
@@ -144,8 +144,8 @@ bun test                 # Run tests
 bun run deploy           # Deploy to Cloudflare Workers
 
 # Database commands
-wrangler d1 execute trend-monitor-local --local --command "SELECT * FROM keywords"
-wrangler d1 execute trend-monitor-local --local --file migrations/0001_init_schema.sql
+bun wrangler:migrate:local  # Run migrations
+wrangler d1 execute DB --local --persit-to ../../.wrangler/state --command "SELECT * FROM keywords"
 ```
 
 **Processor Worker (apps/processor-worker):**

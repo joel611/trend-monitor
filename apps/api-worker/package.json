@@ -17,7 +17,8 @@
 		"lint": "biome check src",
 		"format": "biome check src",
 		"format:fix": "biome check --write src",
-		"wrangler:types": "wrangler types"
+		"wrangler:types": "wrangler types",
+		"wrangler:migrate:local": "bunx wrangler d1 migrations apply DB --local --persist-to ../../.wrangler/state"
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^1.4.1",
