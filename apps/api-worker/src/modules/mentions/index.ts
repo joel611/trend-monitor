@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { MentionsRepository } from "./repository";
+import { MentionsRepository } from "@trend-monitor/db/repositories";
 import type { ListMentionsResponse, MentionResponse } from "@trend-monitor/types";
 import { db } from "../../lib/db";
 

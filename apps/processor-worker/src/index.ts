@@ -1,6 +1,6 @@
 import type { IngestionEvent } from "@trend-monitor/types";
 import { db } from "./lib/db";
-import { MentionsRepository } from "./repositories/mentions-repository";
+import { MentionsRepository } from "@trend-monitor/db/repositories";
 import { KeywordCache } from "./services/keyword-cache";
 import { KeywordMatcher } from "./services/keyword-matcher";
 

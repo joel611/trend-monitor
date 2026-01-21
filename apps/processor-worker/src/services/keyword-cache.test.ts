@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import type { DbClient } from "@trend-monitor/db";
 import { createMockDB } from "@trend-monitor/db/mock";
+import { KeywordsRepository } from "@trend-monitor/db/repositories";
 import { KeywordCache } from "./keyword-cache";
-import { KeywordsRepository } from "./keywords-repository";
 
 // Mock KV namespace
 const createMockKV = () => ({

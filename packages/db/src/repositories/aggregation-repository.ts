@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { DbClient } from "@trend-monitor/db";
-import { dailyAggregates, mentions } from "@trend-monitor/db";
 import { eq, sql } from "drizzle-orm";
+import { dailyAggregates, mentions, type DbClient } from "../index";
 
 export class AggregationRepository {
 	constructor(private db: DbClient) {}

@@ -1,4 +1,4 @@
-import type { AggregationRepository } from "../repositories/aggregation-repository";
+import type { AggregationRepository } from "@trend-monitor/db/repositories";
 
 export interface AggregationSummary {
 	datesProcessed: string[];

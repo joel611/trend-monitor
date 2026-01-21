@@ -1,5 +1,5 @@
 import { db } from "./lib/db";
-import { AggregationRepository } from "./repositories/aggregation-repository";
+import { AggregationRepository } from "@trend-monitor/db/repositories";
 import { AggregationService } from "./services/aggregation-service";
 
 interface Env {

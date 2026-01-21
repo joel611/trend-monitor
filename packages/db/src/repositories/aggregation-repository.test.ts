@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { dailyAggregates, mentions } from "@trend-monitor/db";
-import { createMockDB } from "@trend-monitor/db/mock";
+import { dailyAggregates, mentions } from "../index";
+import { createMockDB } from "../mock";
 import { sql } from "drizzle-orm";
 import { AggregationRepository } from "./aggregation-repository";
 
