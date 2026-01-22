@@ -52,7 +52,14 @@ export default {
 					allEvents.push(...result.events);
 
 					// Record success - resets consecutive failures
-					await configRepo.recordSuccess(configRow.id);
+					const now = new Date().toISOString();
+					await configRepo.recordSuccess(configRow.id, {
+						lastFetchAt: now,
+						lastSuccessAt: now,
+						consecutiveFailures: 0,
+						lastErrorAt: null,
+						lastErrorMessage: null,
+					});
 
 					console.log(
 						`Processed ${configRow.config.name}: ${result.events.length} new posts, checkpoint: ${result.newCheckpoint?.lastPublishedAt || "none"}`,
@@ -62,11 +69,18 @@ export default {
 					console.error(`Failed to process feed ${configRow.config.name}:`, err);
 
 					// Record failure - increments consecutive failures
-					await configRepo.recordFailure(configRow.id, errorMessage);
+					const failures = configRow.consecutiveFailures + 1;
+					const now = new Date().toISOString();
 
-					// Check if we need to auto-disable after 10 consecutive failures
-					const updatedConfig = await configRepo.findById(configRow.id);
-					if (updatedConfig && updatedConfig.consecutiveFailures >= 10) {
+					await configRepo.recordFailure(configRow.id, {
+						lastFetchAt: now,
+						lastErrorAt: now,
+						lastErrorMessage: errorMessage,
+						consecutiveFailures: failures,
+					});
+
+					// Auto-disable after 10 consecutive failures
+					if (failures >= 10) {
 						await configRepo.disable(configRow.id);
 						console.warn(
 							`Auto-disabled source ${configRow.config.name} after 10 consecutive failures`,

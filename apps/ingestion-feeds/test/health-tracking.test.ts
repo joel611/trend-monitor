@@ -58,7 +58,14 @@ describe("Feed Ingestion with Health Tracking", () => {
 		await ingestionService.processFeed(source.id, source.config.url, client, checkpointService);
 
 		// Record success
-		await configRepo.recordSuccess(source.id);
+		const now = new Date().toISOString();
+		await configRepo.recordSuccess(source.id, {
+			lastFetchAt: now,
+			lastSuccessAt: now,
+			consecutiveFailures: 0,
+			lastErrorAt: null,
+			lastErrorMessage: null,
+		});
 
 		// Verify success metrics
 		const updated = await configRepo.findById(source.id);
@@ -88,7 +95,17 @@ describe("Feed Ingestion with Health Tracking", () => {
 			await ingestionService.processFeed(source.id, source.config.url, client, checkpointService);
 		} catch (err) {
 			// Record failure
-			await configRepo.recordFailure(source.id, err instanceof Error ? err.message : "Unknown error");
+			const errorMessage = err instanceof Error ? err.message : "Unknown error";
+			const currentConfig = await configRepo.findById(source.id);
+			const failures = (currentConfig?.consecutiveFailures || 0) + 1;
+			const now = new Date().toISOString();
+
+			await configRepo.recordFailure(source.id, {
+				lastFetchAt: now,
+				lastErrorAt: now,
+				lastErrorMessage: errorMessage,
+				consecutiveFailures: failures,
+			});
 		}
 
 		// Verify failure metrics
@@ -118,10 +135,17 @@ describe("Feed Ingestion with Health Tracking", () => {
 			try {
 				await ingestionService.processFeed(source.id, source.config.url, client, checkpointService);
 			} catch (err) {
-				await configRepo.recordFailure(
-					source.id,
-					err instanceof Error ? err.message : "Unknown error",
-				);
+				const errorMessage = err instanceof Error ? err.message : "Unknown error";
+				const currentConfig = await configRepo.findById(source.id);
+				const failures = (currentConfig?.consecutiveFailures || 0) + 1;
+				const now = new Date().toISOString();
+
+				await configRepo.recordFailure(source.id, {
+					lastFetchAt: now,
+					lastErrorAt: now,
+					lastErrorMessage: errorMessage,
+					consecutiveFailures: failures,
+				});
 			}
 		}
 
@@ -160,10 +184,17 @@ describe("Feed Ingestion with Health Tracking", () => {
 			try {
 				await ingestionService.processFeed(source.id, source.config.url, client, checkpointService);
 			} catch (err) {
-				await configRepo.recordFailure(
-					source.id,
-					err instanceof Error ? err.message : "Unknown error",
-				);
+				const errorMessage = err instanceof Error ? err.message : "Unknown error";
+				const currentConfig = await configRepo.findById(source.id);
+				const failures = (currentConfig?.consecutiveFailures || 0) + 1;
+				const now = new Date().toISOString();
+
+				await configRepo.recordFailure(source.id, {
+					lastFetchAt: now,
+					lastErrorAt: now,
+					lastErrorMessage: errorMessage,
+					consecutiveFailures: failures,
+				});
 			}
 		}
 
@@ -175,7 +206,15 @@ describe("Feed Ingestion with Health Tracking", () => {
 		globalThis.fetch = (() => Promise.resolve(new Response(mockRss))) as any;
 
 		await ingestionService.processFeed(source.id, source.config.url, client, checkpointService);
-		await configRepo.recordSuccess(source.id);
+
+		const now = new Date().toISOString();
+		await configRepo.recordSuccess(source.id, {
+			lastFetchAt: now,
+			lastSuccessAt: now,
+			consecutiveFailures: 0,
+			lastErrorAt: null,
+			lastErrorMessage: null,
+		});
 
 		// Verify failure counter reset
 		updated = await configRepo.findById(source.id);
@@ -201,14 +240,20 @@ describe("Feed Ingestion with Health Tracking", () => {
 			try {
 				await ingestionService.processFeed(source.id, source.config.url, client, checkpointService);
 			} catch (err) {
-				await configRepo.recordFailure(
-					source.id,
-					err instanceof Error ? err.message : "Unknown error",
-				);
+				const errorMessage = err instanceof Error ? err.message : "Unknown error";
+				const currentConfig = await configRepo.findById(source.id);
+				const failures = (currentConfig?.consecutiveFailures || 0) + 1;
+				const now = new Date().toISOString();
+
+				await configRepo.recordFailure(source.id, {
+					lastFetchAt: now,
+					lastErrorAt: now,
+					lastErrorMessage: errorMessage,
+					consecutiveFailures: failures,
+				});
 
 				// Check if we need to disable
-				const updatedConfig = await configRepo.findById(source.id);
-				if (updatedConfig && updatedConfig.consecutiveFailures >= 10) {
+				if (failures >= 10) {
 					await configRepo.disable(source.id);
 				}
 			}
@@ -261,23 +306,53 @@ describe("Feed Ingestion with Health Tracking", () => {
 		// Process feed 1 (fails)
 		try {
 			await ingestionService.processFeed(source1.id, source1.config.url, client, checkpointService);
-			await configRepo.recordSuccess(source1.id);
+
+			const now = new Date().toISOString();
+			await configRepo.recordSuccess(source1.id, {
+				lastFetchAt: now,
+				lastSuccessAt: now,
+				consecutiveFailures: 0,
+				lastErrorAt: null,
+				lastErrorMessage: null,
+			});
 		} catch (err) {
-			await configRepo.recordFailure(
-				source1.id,
-				err instanceof Error ? err.message : "Unknown error",
-			);
+			const errorMessage = err instanceof Error ? err.message : "Unknown error";
+			const currentConfig = await configRepo.findById(source1.id);
+			const failures = (currentConfig?.consecutiveFailures || 0) + 1;
+			const now = new Date().toISOString();
+
+			await configRepo.recordFailure(source1.id, {
+				lastFetchAt: now,
+				lastErrorAt: now,
+				lastErrorMessage: errorMessage,
+				consecutiveFailures: failures,
+			});
 		}
 
 		// Process feed 2 (succeeds)
 		try {
 			await ingestionService.processFeed(source2.id, source2.config.url, client, checkpointService);
-			await configRepo.recordSuccess(source2.id);
+
+			const now = new Date().toISOString();
+			await configRepo.recordSuccess(source2.id, {
+				lastFetchAt: now,
+				lastSuccessAt: now,
+				consecutiveFailures: 0,
+				lastErrorAt: null,
+				lastErrorMessage: null,
+			});
 		} catch (err) {
-			await configRepo.recordFailure(
-				source2.id,
-				err instanceof Error ? err.message : "Unknown error",
-			);
+			const errorMessage = err instanceof Error ? err.message : "Unknown error";
+			const currentConfig = await configRepo.findById(source2.id);
+			const failures = (currentConfig?.consecutiveFailures || 0) + 1;
+			const now = new Date().toISOString();
+
+			await configRepo.recordFailure(source2.id, {
+				lastFetchAt: now,
+				lastErrorAt: now,
+				lastErrorMessage: errorMessage,
+				consecutiveFailures: failures,
+			});
 		}
 
 		// Verify feed 1 recorded failure
