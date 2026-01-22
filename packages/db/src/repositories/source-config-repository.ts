@@ -1,6 +1,7 @@
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { sourceConfigs, type SourceConfig, type InsertSourceConfig, type DbClient } from "../index";
+import type { SuccessMetrics, FailureMetrics, SourceConfigWithHealth } from "@trend-monitor/types";
 
 export class SourceConfigRepository {
 	constructor(private db: DbClient) {}
@@ -50,6 +51,17 @@ export class SourceConfigRepository {
 				`Failed to list enabled source configs: ${err instanceof Error ? err.message : "Unknown error"}`,
 			);
 		}
+	}
+
+	/**
+	 * List all source configs with calculated health status
+	 */
+	async listWithHealth(): Promise<SourceConfigWithHealth[]> {
+		const sources = await this.list();
+		return sources.map((source) => ({
+			...source,
+			health: this.calculateHealth(source),
+		}));
 	}
 
 	/**
@@ -262,19 +274,17 @@ export class SourceConfigRepository {
 	/**
 	 * Record successful fetch
 	 */
-	async recordSuccess(id: string): Promise<void> {
-		const now = new Date().toISOString();
-
+	async recordSuccess(id: string, metrics: SuccessMetrics): Promise<void> {
 		try {
 			await this.db
 				.update(sourceConfigs)
 				.set({
-					lastFetchAt: now,
-					lastSuccessAt: now,
+					lastFetchAt: metrics.lastFetchAt,
+					lastSuccessAt: metrics.lastSuccessAt,
 					consecutiveFailures: 0,
 					lastErrorAt: null,
 					lastErrorMessage: null,
-					updatedAt: now,
+					updatedAt: new Date().toISOString(),
 				})
 				.where(eq(sourceConfigs.id, id));
 		} catch (err) {
@@ -287,24 +297,16 @@ export class SourceConfigRepository {
 	/**
 	 * Record failed fetch
 	 */
-	async recordFailure(id: string, errorMessage: string): Promise<void> {
-		const existing = await this.findById(id);
-		if (!existing) {
-			throw new Error(`Source config ${id} not found`);
-		}
-
-		const now = new Date().toISOString();
-		const failures = existing.consecutiveFailures + 1;
-
+	async recordFailure(id: string, metrics: FailureMetrics): Promise<void> {
 		try {
 			await this.db
 				.update(sourceConfigs)
 				.set({
-					lastFetchAt: now,
-					lastErrorAt: now,
-					lastErrorMessage: errorMessage,
-					consecutiveFailures: failures,
-					updatedAt: now,
+					lastFetchAt: metrics.lastFetchAt,
+					lastErrorAt: metrics.lastErrorAt,
+					lastErrorMessage: metrics.lastErrorMessage,
+					consecutiveFailures: metrics.consecutiveFailures,
+					updatedAt: new Date().toISOString(),
 				})
 				.where(eq(sourceConfigs.id, id));
 		} catch (err) {
@@ -331,5 +333,15 @@ export class SourceConfigRepository {
 				`Failed to disable source config: ${err instanceof Error ? err.message : "Unknown error"}`,
 			);
 		}
+	}
+
+	/**
+	 * Calculate health status based on fetch history
+	 */
+	private calculateHealth(source: SourceConfig): "success" | "warning" | "error" {
+		if (!source.lastFetchAt) return "warning";
+		if (source.consecutiveFailures === 0) return "success";
+		if (source.consecutiveFailures < 6) return "warning";
+		return "error";
 	}
 }
