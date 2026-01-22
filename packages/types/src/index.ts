@@ -102,3 +102,6 @@ export interface FailureMetrics {
 }
 
 export * from "./api";
+
+// Type alias for feed validation result
+export type { ValidateFeedResponse as FeedValidationResult } from "./api";
