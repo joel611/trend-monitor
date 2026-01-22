@@ -1,25 +1,5 @@
 import Parser from "rss-parser";
-
-export interface FeedMetadata {
-	title: string;
-	description: string;
-	format: "rss" | "atom";
-	lastUpdated?: string;
-}
-
-export interface FeedPreviewItem {
-	title: string;
-	link: string;
-	pubDate?: string;
-	content?: string;
-}
-
-export interface ValidationResult {
-	valid: boolean;
-	metadata?: FeedMetadata;
-	preview?: FeedPreviewItem[];
-	error?: string;
-}
+import type { FeedValidationResult } from "@trend-monitor/types";
 
 export class FeedValidatorService {
 	private parser: Parser;
@@ -37,7 +17,7 @@ export class FeedValidatorService {
 		});
 	}
 
-	async validate(url: string, customUserAgent?: string): Promise<ValidationResult> {
+	async validate(url: string, customUserAgent?: string): Promise<FeedValidationResult> {
 		try {
 			// Step 1: Validate URL format
 			let parsedUrl: URL;
@@ -64,8 +44,8 @@ export class FeedValidatorService {
 			// Step 3: Parse RSS/Atom
 			const feed = await this.parseFeed(xml);
 
-			// Step 4: Extract metadata
-			const metadata = this.extractMetadata(feed);
+			// Step 4: Extract metadata (pass XML to detect format)
+			const metadata = this.extractMetadata(feed, xml);
 
 			// Step 5: Extract preview items
 			const preview = this.extractPreview(feed.items || [], 10);
@@ -158,9 +138,9 @@ export class FeedValidatorService {
 		}
 	}
 
-	private extractMetadata(feed: any): FeedMetadata {
-		// Determine format (RSS vs Atom)
-		const format: "rss" | "atom" = feed.feedUrl?.includes("atom") || feed.link?.includes("atom")
+	private extractMetadata(feed: any, xml: string) {
+		// Determine format by checking XML content
+		const format: "rss" | "atom" = xml.includes("<feed") && xml.includes("xmlns=\"http://www.w3.org/2005/Atom\"")
 			? "atom"
 			: "rss";
 
@@ -182,7 +162,7 @@ export class FeedValidatorService {
 		};
 	}
 
-	private extractPreview(items: any[], limit: number = 10): FeedPreviewItem[] {
+	private extractPreview(items: any[], limit: number = 10) {
 		if (!items || items.length === 0) {
 			return [];
 		}
@@ -230,7 +210,7 @@ export class FeedValidatorService {
 
 		// Network errors
 		if (message.includes("timeout") || message.includes("abort")) {
-			return "Request timeout: Feed took too long to respond (10s limit)";
+			return "Network timeout - feed took too long to respond";
 		}
 		if (message.includes("network") || message.includes("fetch failed")) {
 			return "Network error: Could not connect to feed URL";
@@ -253,9 +233,12 @@ export class FeedValidatorService {
 			return "HTTP 500+: Server error";
 		}
 
-		// Parse errors
-		if (message.includes("parse error") || message.includes("xml")) {
-			return `Parse error: ${err.message}`;
+		// Parse errors - check for "not a valid" first
+		if (message.includes("not a valid")) {
+			return "Not a valid RSS/Atom feed";
+		}
+		if (message.includes("parse error") || message.includes("xml") || message.includes("feed not recognized")) {
+			return "Invalid feed format - not valid RSS/Atom XML";
 		}
 
 		// Content errors
