@@ -1,18 +1,18 @@
 import {
-	useReactTable,
-	getCoreRowModel,
-	getSortedRowModel,
-	getFilteredRowModel,
 	type ColumnDef,
 	flexRender,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getSortedRowModel,
+	useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { ActionButtons } from "./ActionButtons";
 import { HealthBadge } from "./HealthBadge";
 import { StatusToggle } from "./StatusToggle";
-import { ActionButtons } from "./ActionButtons";
 
 interface SourcesTableProps {
 	sources: SourceConfigWithHealth[];
@@ -34,9 +34,7 @@ export function SourcesTable({
 			accessorKey: "config.name",
 			header: "Name",
 			enableSorting: true,
-			cell: ({ row }) => (
-				<div className="font-medium">{row.original.config.name}</div>
-			),
+			cell: ({ row }) => <div className="font-medium">{row.original.config.name}</div>,
 		},
 		{
 			accessorKey: "config.url",
@@ -55,9 +53,7 @@ export function SourcesTable({
 		{
 			accessorKey: "type",
 			header: "Type",
-			cell: ({ row }) => (
-				<span className="text-sm capitalize">{row.original.type}</span>
-			),
+			cell: ({ row }) => <span className="text-sm capitalize">{row.original.type}</span>,
 		},
 		{
 			id: "enabled",
@@ -101,11 +97,7 @@ export function SourcesTable({
 			id: "actions",
 			header: "",
 			cell: ({ row }) => (
-				<ActionButtons
-					source={row.original}
-					onEdit={onEditSource}
-					onDelete={onDeleteSource}
-				/>
+				<ActionButtons source={row.original} onEdit={onEditSource} onDelete={onDeleteSource} />
 			),
 		},
 	];
@@ -146,10 +138,7 @@ export function SourcesTable({
 									>
 										{header.isPlaceholder
 											? null
-											: flexRender(
-													header.column.columnDef.header,
-													header.getContext()
-											  )}
+											: flexRender(header.column.columnDef.header, header.getContext())}
 									</th>
 								))}
 							</tr>

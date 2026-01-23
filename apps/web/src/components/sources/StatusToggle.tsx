@@ -1,6 +1,6 @@
-import { Switch } from "../ui/switch";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useToggleSourceStatus } from "../../features/sources/mutations";
+import { Switch } from "../ui/switch";
 
 interface StatusToggleProps {
 	source: SourceConfigWithHealth;

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Badge } from "./ui/badge";
 import type { KeywordResponse } from "@trend-monitor/types";
+import { Badge } from "./ui/badge";
 
 interface KeywordsListProps {
 	keywords: KeywordResponse[];

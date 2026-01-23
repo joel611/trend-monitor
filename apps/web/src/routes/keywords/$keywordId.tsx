@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
-import { TrendChart } from "../../components/TrendChart";
+import { createFileRoute } from "@tanstack/react-router";
 import { MentionsList } from "../../components/MentionsList";
+import { TrendChart } from "../../components/TrendChart";
+import { Badge } from "../../components/ui/badge";
+import { Card } from "../../components/ui/card";
 import { keywordDetailQueryOptions } from "../../features/keywords/queries";
-import { trendDataQueryOptions } from "../../features/trends/queries";
 import { mentionsQueryOptions } from "../../features/mentions/queries";
+import { trendDataQueryOptions } from "../../features/trends/queries";
 
 export const Route = createFileRoute("/keywords/$keywordId")({
 	component: KeywordDetail,
@@ -16,15 +16,13 @@ function KeywordDetail() {
 	const { keywordId } = Route.useParams();
 
 	const { data: keyword, isLoading: keywordLoading } = useQuery(
-		keywordDetailQueryOptions(keywordId)
+		keywordDetailQueryOptions(keywordId),
 	);
 
-	const { data: trend, isLoading: trendLoading } = useQuery(
-		trendDataQueryOptions(keywordId)
-	);
+	const { data: trend, isLoading: trendLoading } = useQuery(trendDataQueryOptions(keywordId));
 
 	const { data: mentions, isLoading: mentionsLoading } = useQuery(
-		mentionsQueryOptions(keywordId, 20)
+		mentionsQueryOptions(keywordId, 20),
 	);
 
 	const isLoading = keywordLoading || trendLoading || mentionsLoading;

@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
 import { Layout } from "../../components/Layout";
-import { SourcesTable } from "../../components/sources/SourcesTable";
 import { SourceSidePanel } from "../../components/sources/SourceSidePanel";
+import { SourcesTable } from "../../components/sources/SourcesTable";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,9 +15,8 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
-import type { SourceConfigWithHealth } from "@trend-monitor/types";
-import { sourcesQueryOptions } from "../../features/sources/queries";
 import { useDeleteSource } from "../../features/sources/mutations";
+import { sourcesQueryOptions } from "../../features/sources/queries";
 
 export const Route = createFileRoute("/sources/")({
 	component: SourcesPage,

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { SkeletonCard } from "../components/Skeleton";
 import { StatsCard } from "../components/StatsCard";
 import { TrendsList } from "../components/TrendsList";
-import { SkeletonCard } from "../components/Skeleton";
 import { trendsOverviewQueryOptions } from "../features/trends/queries";
 
 export const Route = createFileRoute("/")({

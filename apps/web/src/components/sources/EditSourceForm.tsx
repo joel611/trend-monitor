@@ -1,13 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+import type { FeedValidationResult, SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
+import { useUpdateSource } from "../../features/sources/mutations";
+import { apiClient } from "../../lib/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { apiClient } from "../../lib/api";
 import { FeedPreview } from "./FeedPreview";
-import type { SourceConfigWithHealth, FeedValidationResult } from "@trend-monitor/types";
-import { useUpdateSource } from "../../features/sources/mutations";
 
 interface EditSourceFormProps {
 	source: SourceConfigWithHealth;
@@ -46,7 +46,7 @@ export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormPr
 					onSuccess: () => {
 						onSuccess?.();
 					},
-				}
+				},
 			);
 		},
 	});

@@ -1,8 +1,8 @@
+import type { CreateKeywordRequest } from "@trend-monitor/types";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import type { CreateKeywordRequest } from "@trend-monitor/types";
 
 interface KeywordFormProps {
 	onSubmit: (data: CreateKeywordRequest) => void;

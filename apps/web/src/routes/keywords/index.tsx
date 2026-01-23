@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Button } from "../../components/ui/button";
+import { KeywordForm } from "../../components/KeywordForm";
 import { KeywordsList } from "../../components/KeywordsList";
+import { SkeletonTable } from "../../components/Skeleton";
+import { Button } from "../../components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -11,10 +13,8 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "../../components/ui/dialog";
-import { KeywordForm } from "../../components/KeywordForm";
-import { SkeletonTable } from "../../components/Skeleton";
-import { keywordsQueryOptions } from "../../features/keywords/queries";
 import { useCreateKeyword, useDeleteKeyword } from "../../features/keywords/mutations";
+import { keywordsQueryOptions } from "../../features/keywords/queries";
 
 export const Route = createFileRoute("/keywords/")({
 	component: Keywords,
@@ -74,10 +74,10 @@ function Keywords() {
 						</DialogHeader>
 						<KeywordForm
 							onSubmit={(data) => {
-							createMutation.mutate(data, {
-								onSuccess: () => setIsDialogOpen(false),
-							});
-						}}
+								createMutation.mutate(data, {
+									onSuccess: () => setIsDialogOpen(false),
+								});
+							}}
 							onCancel={() => setIsDialogOpen(false)}
 							isSubmitting={createMutation.isPending}
 						/>

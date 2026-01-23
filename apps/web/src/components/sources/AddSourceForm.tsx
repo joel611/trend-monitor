@@ -1,13 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+import type { FeedValidationResult } from "@trend-monitor/types";
 import { useState } from "react";
+import { useCreateSource } from "../../features/sources/mutations";
+import { apiClient } from "../../lib/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { apiClient } from "../../lib/api";
 import { FeedPreview } from "./FeedPreview";
-import type { FeedValidationResult } from "@trend-monitor/types";
-import { useCreateSource } from "../../features/sources/mutations";
 
 interface AddSourceFormProps {
 	onSuccess: () => void;
@@ -46,7 +46,7 @@ export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
 					onSuccess: () => {
 						onSuccess?.();
 					},
-				}
+				},
 			);
 		},
 	});
