@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../../lib/api";
 import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { TrendChart } from "../../components/TrendChart";
 import { MentionsList } from "../../components/MentionsList";
+import { keywordDetailQueryOptions } from "../../features/keywords/queries";
+import { trendDataQueryOptions } from "../../features/trends/queries";
+import { mentionsQueryOptions } from "../../features/mentions/queries";
 
 export const Route = createFileRoute("/keywords/$keywordId")({
 	component: KeywordDetail,
@@ -13,34 +15,17 @@ export const Route = createFileRoute("/keywords/$keywordId")({
 function KeywordDetail() {
 	const { keywordId } = Route.useParams();
 
-	const { data: keyword, isLoading: keywordLoading } = useQuery({
-		queryKey: ["keywords", keywordId],
-		queryFn: async () => {
-			const response = await apiClient.api.keywords({ id: keywordId }).get();
-			if (response.error) throw new Error("Failed to fetch keyword");
-			return response.data;
-		},
-	});
+	const { data: keyword, isLoading: keywordLoading } = useQuery(
+		keywordDetailQueryOptions(keywordId)
+	);
 
-	const { data: trend, isLoading: trendLoading } = useQuery({
-		queryKey: ["trends", keywordId],
-		queryFn: async () => {
-			const response = await apiClient.api.trends({ keywordId }).get();
-			if (response.error) throw new Error("Failed to fetch trend");
-			return response.data;
-		},
-	});
+	const { data: trend, isLoading: trendLoading } = useQuery(
+		trendDataQueryOptions(keywordId)
+	);
 
-	const { data: mentions, isLoading: mentionsLoading } = useQuery({
-		queryKey: ["mentions", keywordId],
-		queryFn: async () => {
-			const response = await apiClient.api.mentions.get({
-				query: { keywordId, limit: 20 },
-			});
-			if (response.error) throw new Error("Failed to fetch mentions");
-			return response.data;
-		},
-	});
+	const { data: mentions, isLoading: mentionsLoading } = useQuery(
+		mentionsQueryOptions(keywordId, 20)
+	);
 
 	const isLoading = keywordLoading || trendLoading || mentionsLoading;
 
