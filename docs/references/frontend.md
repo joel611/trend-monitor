@@ -96,12 +96,13 @@ Always invalidate queries after mutations to ensure cache consistency:
 
 ```typescript
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from '../lib/api'
 
 const queryClient = useQueryClient();
 
 const mutation = useMutation({
   mutationFn: async (data) => {
-    return await api.sources.post(data);
+    return await apiClient.api.sources.post(data);
   },
   onSuccess: () => {
     // Invalidate and refetch

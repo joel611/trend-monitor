@@ -14,7 +14,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
-import { api } from "../../lib/api";
+import { apiClient } from "../../lib/api";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 
 export const Route = createFileRoute("/sources/")({
@@ -32,14 +32,14 @@ function SourcesPage() {
 	const { data, isLoading } = useQuery({
 		queryKey: ["sources"],
 		queryFn: async () => {
-			const response = await api.sources.get();
+			const response = await apiClient.api.sources.get();
 			return response.data;
 		},
 	});
 
 	const deleteMutation = useMutation({
 		mutationFn: async (id: string) => {
-			await api.sources({ id }).delete();
+			await apiClient.api.sources({ id }).delete();
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["sources"] });
@@ -76,9 +76,7 @@ function SourcesPage() {
 			<div className="space-y-6">
 				<div>
 					<h1 className="text-2xl font-bold text-gray-900">Sources</h1>
-					<p className="text-gray-600 mt-1">
-						Manage RSS/Atom feed sources for trend monitoring
-					</p>
+					<p className="text-gray-600 mt-1">Manage RSS/Atom feed sources for trend monitoring</p>
 				</div>
 
 				{isLoading ? (
@@ -105,15 +103,13 @@ function SourcesPage() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Delete Source</AlertDialogTitle>
 						<AlertDialogDescription>
-							Are you sure you want to delete "{sourceToDelete?.config.name}"? This
-							action cannot be undone.
+							Are you sure you want to delete "{sourceToDelete?.config.name}"? This action cannot be
+							undone.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction onClick={handleConfirmDelete}>
-							Delete
-						</AlertDialogAction>
+						<AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>

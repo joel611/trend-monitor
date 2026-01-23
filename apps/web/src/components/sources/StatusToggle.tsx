@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Switch } from "../ui/switch";
-import { api } from "../../lib/api";
+import { apiClient } from "../../lib/api";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 
 interface StatusToggleProps {
@@ -12,7 +12,7 @@ export function StatusToggle({ source }: StatusToggleProps) {
 
 	const toggleMutation = useMutation({
 		mutationFn: async (id: string) => {
-			const response = await api.sources[id].toggle.patch();
+			const response = await apiClient.api.sources({ id }).toggle.patch();
 			return response.data;
 		},
 		onSuccess: () => {

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { api } from "../../lib/api";
+import { apiClient } from "../../lib/api";
 import { Button } from "../../components/ui/button";
 import { KeywordsList } from "../../components/KeywordsList";
 import {
@@ -27,7 +27,7 @@ function Keywords() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["keywords"],
 		queryFn: async () => {
-			const response = await api.api.keywords.get();
+			const response = await apiClient.api.keywords.get();
 			if (response.error) throw new Error("Failed to fetch keywords");
 			return response.data;
 		},
@@ -35,7 +35,7 @@ function Keywords() {
 
 	const createMutation = useMutation({
 		mutationFn: async (data: CreateKeywordRequest) => {
-			const response = await api.api.keywords.post(data);
+			const response = await apiClient.api.keywords.post(data);
 			if (response.error) throw new Error("Failed to create keyword");
 			return response.data;
 		},
@@ -47,7 +47,7 @@ function Keywords() {
 
 	const deleteMutation = useMutation({
 		mutationFn: async (id: string) => {
-			const response = await api.api.keywords({ id }).delete();
+			const response = await apiClient.api.keywords({ id }).delete();
 			if (response.error) throw new Error("Failed to delete keyword");
 		},
 		onSuccess: () => {

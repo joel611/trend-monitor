@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { api } from "../../lib/api";
+import { apiClient } from "../../lib/api";
 import { FeedPreview } from "./FeedPreview";
 import type { FeedValidationResult } from "@trend-monitor/types";
 
@@ -20,7 +20,7 @@ export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
 
 	const validateMutation = useMutation({
 		mutationFn: async (data: { url: string; customUserAgent?: string }) => {
-			const response = await api.sources.validate.post(data);
+			const response = await apiClient.api.sources.validate.post(data);
 			return response.data;
 		},
 		onSuccess: (data) => {
@@ -35,7 +35,7 @@ export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
 			type: "feed";
 			customUserAgent?: string;
 		}) => {
-			const response = await api.sources.post(data);
+			const response = await apiClient.api.sources.post(data);
 			return response.data;
 		},
 		onSuccess: () => {
@@ -153,10 +153,7 @@ export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
 				<Button type="button" variant="outline" onClick={onCancel}>
 					Cancel
 				</Button>
-				<Button
-					type="submit"
-					disabled={!validation?.valid || createMutation.isPending}
-				>
+				<Button type="submit" disabled={!validation?.valid || createMutation.isPending}>
 					{createMutation.isPending ? "Adding..." : "Add Source"}
 				</Button>
 			</div>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { apiClient } from "../lib/api";
 import { StatsCard } from "../components/StatsCard";
 import { TrendsList } from "../components/TrendsList";
 import { SkeletonCard } from "../components/Skeleton";
@@ -13,7 +13,7 @@ function Overview() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["trends", "overview"],
 		queryFn: async () => {
-			const response = await api.api.trends.overview.get();
+			const response = await apiClient.api.trends.overview.get();
 			if (response.error) throw new Error("Failed to fetch trends");
 			return response.data;
 		},

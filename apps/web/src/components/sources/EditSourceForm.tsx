@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { api } from "../../lib/api";
+import { apiClient } from "../../lib/api";
 import { FeedPreview } from "./FeedPreview";
 import type { SourceConfigWithHealth, FeedValidationResult } from "@trend-monitor/types";
 
@@ -22,7 +22,7 @@ export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormPr
 
 	const validateMutation = useMutation({
 		mutationFn: async (data: { url: string; customUserAgent?: string }) => {
-			const response = await api.sources.validate.post(data);
+			const response = await apiClient.api.sources.validate.post(data);
 			return response.data;
 		},
 		onSuccess: (data) => {
@@ -32,12 +32,8 @@ export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormPr
 	});
 
 	const updateMutation = useMutation({
-		mutationFn: async (data: {
-			url?: string;
-			name?: string;
-			customUserAgent?: string;
-		}) => {
-			const response = await api.sources({ id: source.id }).put(data);
+		mutationFn: async (data: { url?: string; name?: string; customUserAgent?: string }) => {
+			const response = await apiClient.api.sources({ id: source.id }).put(data);
 			return response.data;
 		},
 		onSuccess: () => {

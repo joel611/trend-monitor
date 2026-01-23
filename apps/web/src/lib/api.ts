@@ -7,4 +7,4 @@ const getBaseURL = (): string => {
 };
 
 // Create Eden Treaty client with type safety from API worker
-export const api = treaty<App>(getBaseURL());
+export const apiClient = treaty<App>(getBaseURL());

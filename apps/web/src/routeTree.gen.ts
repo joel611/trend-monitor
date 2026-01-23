@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as R404RouteImport } from './routes/404'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SourcesIndexRouteImport } from './routes/sources/index'
 import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
 import { Route as KeywordsKeywordIdRouteImport } from './routes/keywords/$keywordId'
 
@@ -22,6 +23,11 @@ const R404Route = R404RouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SourcesIndexRoute = SourcesIndexRouteImport.update({
+  id: '/sources/',
+  path: '/sources/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KeywordsIndexRoute = KeywordsIndexRouteImport.update({
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/404': typeof R404Route
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/keywords/': typeof KeywordsIndexRoute
+  '/sources/': typeof SourcesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/404': typeof R404Route
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/keywords': typeof KeywordsIndexRoute
+  '/sources': typeof SourcesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/404': typeof R404Route
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/keywords/': typeof KeywordsIndexRoute
+  '/sources/': typeof SourcesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/404' | '/keywords/$keywordId' | '/keywords/'
+  fullPaths: '/' | '/404' | '/keywords/$keywordId' | '/keywords/' | '/sources/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/404' | '/keywords/$keywordId' | '/keywords'
-  id: '__root__' | '/' | '/404' | '/keywords/$keywordId' | '/keywords/'
+  to: '/' | '/404' | '/keywords/$keywordId' | '/keywords' | '/sources'
+  id:
+    | '__root__'
+    | '/'
+    | '/404'
+    | '/keywords/$keywordId'
+    | '/keywords/'
+    | '/sources/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +82,7 @@ export interface RootRouteChildren {
   R404Route: typeof R404Route
   KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
   KeywordsIndexRoute: typeof KeywordsIndexRoute
+  SourcesIndexRoute: typeof SourcesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -83,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sources/': {
+      id: '/sources/'
+      path: '/sources'
+      fullPath: '/sources/'
+      preLoaderRoute: typeof SourcesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/keywords/': {
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   R404Route: R404Route,
   KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
   KeywordsIndexRoute: KeywordsIndexRoute,
+  SourcesIndexRoute: SourcesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
