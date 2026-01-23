@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev --persist-to ../../.wrangler-shared/state",
+		"dev-removed": "wrangler dev --persist-to ../../.wrangler-shared/state",
 		"build": "tsc && wrangler deploy --dry-run",
 		"deploy": "wrangler deploy",
 		"wrangler:types": "wrangler types",

@@ -80,6 +80,11 @@ bun run test
 bun run format:fix
 ```
 
+## Local Development Notes
+- `ingestion-feeds` will start with `processor-worker` worker in the same process in turborepo to enable local queue processing.
+- `processor-worker` logs will goes into same process in `ingestion-feeds`.
+- In deployment, processor-worker runs as a separate worker.
+
 ## References
 
 For detailed information on specific topics, see:
