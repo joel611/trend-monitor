@@ -86,29 +86,36 @@ The feed ingestion worker (`apps/ingestion-feeds`) fetches RSS/Atom feeds and pu
 
 ```
 src/
-├── index.ts              # Scheduled handler entry point
+├── index.ts              # Main entry point (scheduled + HTTP handlers)
+├── handlers/
+│   └── scheduled-handler.ts    # Cron-triggered handler
+├── routes/
+│   └── trigger.ts              # HTTP endpoints for manual triggering
 ├── lib/
 │   ├── feed-parser.ts    # RSS/Atom parser using rss-parser
 │   ├── feed-client.ts    # Feed fetcher with user agent support
-│   └── html-to-text.ts   # HTML to plain text converter
-├── repositories/
-│   └── source-config-repository.ts  # Load feed configs from D1
+│   ├── html-to-text.ts   # HTML to plain text converter
+│   └── db/
+│       └── index.ts      # Runtime DB binding
 ├── services/
 │   ├── checkpoint-service.ts        # KV-based checkpoint storage
-│   └── ingestion-service.ts         # Feed processing with checkpointing
+│   ├── ingestion-service.ts         # Feed processing with checkpointing
+│   └── feed-processor.ts            # Core ingestion logic (shared)
 └── test/
-    └── integration.test.ts  # End-to-end integration tests
+    ├── mock-db.ts                  # Mock environment for testing
+    └── integration.test.ts         # End-to-end integration tests
 ```
 
 **Key Features:**
-- Cron-triggered (every 15 minutes) scheduled worker
+- **Dual-mode operation**: Cron-triggered (every 15 minutes) and HTTP-triggered
+- **HTTP endpoints**: POST /trigger/all and POST /trigger/:id for manual ingestion
 - Universal RSS 2.0 and Atom 1.0 feed support using `rss-parser` package
 - No authentication required - works with any public feed
 - KV-based checkpoints for incremental fetching (tracks last processed post)
 - HTML to plain text conversion for feed content
 - Per-feed custom User-Agent configuration
 - Supports Reddit, X/Twitter (via xcancel.com), Hacker News, blogs, and any RSS/Atom feed
-- Comprehensive test coverage (30 tests, all passing)
+- Comprehensive test coverage (45 tests, all passing)
 
 ## Source Config Management
 
