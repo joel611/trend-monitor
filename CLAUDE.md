@@ -43,6 +43,7 @@ packages/
 ├── types/               # Shared TypeScript types [✓]
 ├── config/              # Configuration [✓]
 └── utils/               # Utilities [✓]
+.wrangler-shared/        # shared miniflare data across all worker
 ```
 
 ### Core Data Flow

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
-import { Layout } from "../../components/Layout";
 import { SourceSidePanel } from "../../components/sources/SourceSidePanel";
 import { SourcesTable } from "../../components/sources/SourcesTable";
 import {
@@ -62,7 +61,7 @@ function SourcesPage() {
 	};
 
 	return (
-		<Layout>
+		<>
 			<div className="space-y-6">
 				<div>
 					<h1 className="text-2xl font-bold text-gray-900">Sources</h1>
@@ -103,6 +102,6 @@ function SourcesPage() {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</Layout>
+		</>
 	);
 }
