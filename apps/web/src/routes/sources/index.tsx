@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
+import { toast } from "sonner";
 import { SourceSidePanel } from "../../components/sources/SourceSidePanel";
 import { SourcesTable } from "../../components/sources/SourcesTable";
 import {
@@ -70,16 +71,14 @@ function SourcesPage() {
 	const handleTriggerAll = () => {
 		triggerAllMutation.mutate(undefined, {
 			onSuccess: (data) => {
-				console.log(
-					`Ingestion triggered: ${data.summary.totalSources} sources, ${data.summary.successfulSources} succeeded, ${data.summary.failedSources} failed`,
-				);
-				alert(
-					`Triggered ${data.summary.totalSources} sources\n✓ ${data.summary.successfulSources} succeeded\n✗ ${data.summary.failedSources} failed\n${data.summary.totalEvents} events processed`,
-				);
+				toast.success("Ingestion triggered", {
+					description: `${data.summary.successfulSources} succeeded, ${data.summary.failedSources} failed. ${data.summary.totalEvents} events processed.`,
+				});
 			},
 			onError: (error) => {
-				console.error("Failed to trigger ingestion:", error);
-				alert(`Failed to trigger ingestion: ${error.message}`);
+				toast.error("Failed to trigger ingestion", {
+					description: error.message,
+				});
 			},
 		});
 	};
@@ -90,16 +89,19 @@ function SourcesPage() {
 			onSuccess: (data) => {
 				setTriggeringSourceId(null);
 				if (data.success) {
-					console.log(`${data.sourceName}: ${data.eventsCount} events processed`);
-					alert(`✓ ${data.sourceName}\n${data.eventsCount} events processed`);
+					toast.success(`${data.sourceName} triggered`, {
+						description: `${data.eventsCount} events processed`,
+					});
 				} else {
-					console.error(`Failed: ${data.error}`);
-					alert(`✗ ${data.sourceName}\nFailed: ${data.error}`);
+					toast.error(`${data.sourceName} failed`, {
+						description: data.error,
+					});
 				}
 			},
 			onError: (error) => {
-				console.error("Failed to trigger source:", error);
-				alert(`Failed to trigger source: ${error.message}`);
+				toast.error("Failed to trigger source", {
+					description: error.message,
+				});
 				setTriggeringSourceId(null);
 			},
 		});
