@@ -5,6 +5,7 @@ import { CloudflareAdapter } from "elysia/adapter/cloudflare-worker";
 import { keywordsRoutes } from "./modules/keywords";
 import { mentionsRoutes } from "./modules/mentions";
 import { trendsRoutes } from "./modules/trends";
+import { sourcesRoutes } from "./modules/sources";
 
 const app = new Elysia({ adapter: CloudflareAdapter })
 	.use(cors())
@@ -14,7 +15,8 @@ const app = new Elysia({ adapter: CloudflareAdapter })
 			.get("/health", () => ({ status: "ok" }))
 			.use(keywordsRoutes)
 			.use(mentionsRoutes)
-			.use(trendsRoutes),
+			.use(trendsRoutes)
+			.use(sourcesRoutes),
 	)
 	.compile();
 

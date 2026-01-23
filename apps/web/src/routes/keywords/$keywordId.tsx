@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../lib/api";
+import { apiClient } from "../../lib/api";
 import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { TrendChart } from "../../components/TrendChart";
@@ -16,7 +16,7 @@ function KeywordDetail() {
 	const { data: keyword, isLoading: keywordLoading } = useQuery({
 		queryKey: ["keywords", keywordId],
 		queryFn: async () => {
-			const response = await api.api.keywords({ id: keywordId }).get();
+			const response = await apiClient.api.keywords({ id: keywordId }).get();
 			if (response.error) throw new Error("Failed to fetch keyword");
 			return response.data;
 		},
@@ -25,7 +25,7 @@ function KeywordDetail() {
 	const { data: trend, isLoading: trendLoading } = useQuery({
 		queryKey: ["trends", keywordId],
 		queryFn: async () => {
-			const response = await api.api.trends({ keywordId }).get();
+			const response = await apiClient.api.trends({ keywordId }).get();
 			if (response.error) throw new Error("Failed to fetch trend");
 			return response.data;
 		},
@@ -34,7 +34,7 @@ function KeywordDetail() {
 	const { data: mentions, isLoading: mentionsLoading } = useQuery({
 		queryKey: ["mentions", keywordId],
 		queryFn: async () => {
-			const response = await api.api.mentions.get({
+			const response = await apiClient.api.mentions.get({
 				query: { keywordId, limit: 20 },
 			});
 			if (response.error) throw new Error("Failed to fetch mentions");

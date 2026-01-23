@@ -33,6 +33,13 @@ export function Layout({ children }: LayoutProps) {
 								>
 									Keywords
 								</Link>
+								<Link
+									to="/sources"
+									className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+									activeProps={{ className: "border-b-2 border-primary-500 text-gray-900" }}
+								>
+									Sources
+								</Link>
 							</div>
 						</div>
 					</div>

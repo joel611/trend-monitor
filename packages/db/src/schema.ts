@@ -50,14 +50,22 @@ export const dailyAggregates = sqliteTable(
 	}),
 );
 
-// Source configurations table
+// Source configurations table (feed sources for ingestion)
 export const sourceConfigs = sqliteTable("source_configs", {
 	id: text("id").primaryKey(),
 	type: text("type", { enum: ["feed", "x"] }).notNull(),
-	config: text("config", { mode: "json" }).$type<Record<string, any>>().notNull(),
+	config: text("config", { mode: "json" }).$type<{ url: string; name: string; customUserAgent?: string; feedTitle?: string; feedDescription?: string }>().notNull(),
 	enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 	createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 	updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+	// Health tracking fields
+	lastFetchAt: text("last_fetch_at"),
+	lastSuccessAt: text("last_success_at"),
+	lastErrorAt: text("last_error_at"),
+	lastErrorMessage: text("last_error_message"),
+	consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+	// Soft delete support
+	deletedAt: text("deleted_at"),
 });
 
 // Export types inferred from schema

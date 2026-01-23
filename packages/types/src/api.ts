@@ -109,3 +109,74 @@ export interface ListMentionsResponse {
   limit: number;
   offset: number;
 }
+
+// Sources API
+export interface ValidateFeedRequest {
+  url: string;
+  customUserAgent?: string;
+}
+
+export interface FeedMetadata {
+  title: string;
+  description: string;
+  format: "rss" | "atom";
+  lastUpdated?: string;
+}
+
+export interface FeedPreviewItem {
+  title: string;
+  link: string;
+  pubDate?: string;
+  content?: string;
+}
+
+export interface ValidateFeedResponse {
+  valid: boolean;
+  metadata?: FeedMetadata;
+  preview?: FeedPreviewItem[];
+  error?: string;
+}
+
+export interface CreateSourceRequest {
+  url: string;
+  name: string;
+  type: "feed" | "x";
+  customUserAgent?: string;
+  feedTitle?: string;
+  feedDescription?: string;
+}
+
+export interface UpdateSourceRequest {
+  url?: string;
+  name?: string;
+  customUserAgent?: string;
+  feedTitle?: string;
+  feedDescription?: string;
+  enabled?: boolean;
+}
+
+export interface SourceConfigResponse {
+  id: string;
+  type: "feed" | "x";
+  config: {
+    url: string;
+    name: string;
+    customUserAgent?: string;
+    feedTitle?: string;
+    feedDescription?: string;
+  };
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastFetchAt?: string | null;
+  lastSuccessAt?: string | null;
+  lastErrorAt?: string | null;
+  lastErrorMessage?: string | null;
+  consecutiveFailures: number;
+  deletedAt?: string | null;
+  health?: "success" | "warning" | "error";
+}
+
+export interface ListSourcesResponse {
+  sources: SourceConfigResponse[];
+}
