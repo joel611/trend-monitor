@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -7,6 +7,7 @@ import { Label } from "../ui/label";
 import { apiClient } from "../../lib/api";
 import { FeedPreview } from "./FeedPreview";
 import type { SourceConfigWithHealth, FeedValidationResult } from "@trend-monitor/types";
+import { useUpdateSource } from "../../features/sources/mutations";
 
 interface EditSourceFormProps {
 	source: SourceConfigWithHealth;
@@ -15,7 +16,6 @@ interface EditSourceFormProps {
 }
 
 export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormProps) {
-	const queryClient = useQueryClient();
 	const [validation, setValidation] = useState<FeedValidationResult | null>(null);
 	const [isValidating, setIsValidating] = useState(false);
 	const [urlChanged, setUrlChanged] = useState(false);
@@ -31,16 +31,7 @@ export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormPr
 		},
 	});
 
-	const updateMutation = useMutation({
-		mutationFn: async (data: { url?: string; name?: string; customUserAgent?: string }) => {
-			const response = await apiClient.api.sources({ id: source.id }).put(data);
-			return response.data;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["sources"] });
-			onSuccess();
-		},
-	});
+	const updateMutation = useUpdateSource();
 
 	const form = useForm({
 		defaultValues: {
@@ -49,7 +40,14 @@ export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormPr
 			customUserAgent: source.config.customUserAgent || "",
 		},
 		onSubmit: async ({ value }) => {
-			await updateMutation.mutateAsync(value);
+			updateMutation.mutate(
+				{ id: source.id, data: value },
+				{
+					onSuccess: () => {
+						onSuccess?.();
+					},
+				}
+			);
 		},
 	});
 
