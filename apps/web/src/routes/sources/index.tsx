@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Layout } from "../../components/Layout";
 import { SourcesTable } from "../../components/sources/SourcesTable";
@@ -14,39 +14,24 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
-import { apiClient } from "../../lib/api";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
+import { sourcesQueryOptions } from "../../features/sources/queries";
+import { useDeleteSource } from "../../features/sources/mutations";
 
 export const Route = createFileRoute("/sources/")({
 	component: SourcesPage,
 });
 
 function SourcesPage() {
-	const queryClient = useQueryClient();
 	const [sidePanelOpen, setSidePanelOpen] = useState(false);
 	const [sidePanelMode, setSidePanelMode] = useState<"add" | "edit">("add");
 	const [selectedSource, setSelectedSource] = useState<SourceConfigWithHealth | undefined>();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [sourceToDelete, setSourceToDelete] = useState<SourceConfigWithHealth | undefined>();
 
-	const { data, isLoading } = useQuery({
-		queryKey: ["sources"],
-		queryFn: async () => {
-			const response = await apiClient.api.sources.get();
-			return response.data;
-		},
-	});
+	const { data, isLoading } = useQuery(sourcesQueryOptions());
 
-	const deleteMutation = useMutation({
-		mutationFn: async (id: string) => {
-			await apiClient.api.sources({ id }).delete();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["sources"] });
-			setDeleteDialogOpen(false);
-			setSourceToDelete(undefined);
-		},
-	});
+	const deleteMutation = useDeleteSource();
 
 	const handleAddSource = () => {
 		setSidePanelMode("add");
@@ -67,7 +52,12 @@ function SourcesPage() {
 
 	const handleConfirmDelete = () => {
 		if (sourceToDelete) {
-			deleteMutation.mutate(sourceToDelete.id);
+			deleteMutation.mutate(sourceToDelete.id, {
+				onSuccess: () => {
+					setDeleteDialogOpen(false);
+					setSourceToDelete(undefined);
+				},
+			});
 		}
 	};
 
