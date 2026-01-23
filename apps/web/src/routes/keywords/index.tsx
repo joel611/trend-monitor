@@ -1,9 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { apiClient } from "../../lib/api";
-import { Button } from "../../components/ui/button";
+import { KeywordForm } from "../../components/KeywordForm";
 import { KeywordsList } from "../../components/KeywordsList";
+import { SkeletonTable } from "../../components/Skeleton";
+import { Button } from "../../components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -12,9 +13,8 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "../../components/ui/dialog";
-import { KeywordForm } from "../../components/KeywordForm";
-import { SkeletonTable } from "../../components/Skeleton";
-import type { CreateKeywordRequest } from "@trend-monitor/types";
+import { useCreateKeyword, useDeleteKeyword } from "../../features/keywords/mutations";
+import { keywordsQueryOptions } from "../../features/keywords/queries";
 
 export const Route = createFileRoute("/keywords/")({
 	component: Keywords,
@@ -22,38 +22,11 @@ export const Route = createFileRoute("/keywords/")({
 
 function Keywords() {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const queryClient = useQueryClient();
 
-	const { data, isLoading, error } = useQuery({
-		queryKey: ["keywords"],
-		queryFn: async () => {
-			const response = await apiClient.api.keywords.get();
-			if (response.error) throw new Error("Failed to fetch keywords");
-			return response.data;
-		},
-	});
+	const { data, isLoading, error } = useQuery(keywordsQueryOptions());
 
-	const createMutation = useMutation({
-		mutationFn: async (data: CreateKeywordRequest) => {
-			const response = await apiClient.api.keywords.post(data);
-			if (response.error) throw new Error("Failed to create keyword");
-			return response.data;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["keywords"] });
-			setIsDialogOpen(false);
-		},
-	});
-
-	const deleteMutation = useMutation({
-		mutationFn: async (id: string) => {
-			const response = await apiClient.api.keywords({ id }).delete();
-			if (response.error) throw new Error("Failed to delete keyword");
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["keywords"] });
-		},
-	});
+	const createMutation = useCreateKeyword();
+	const deleteMutation = useDeleteKeyword();
 
 	const handleDelete = (id: string) => {
 		if (confirm("Are you sure you want to archive this keyword?")) {
@@ -100,7 +73,11 @@ function Keywords() {
 							</DialogDescription>
 						</DialogHeader>
 						<KeywordForm
-							onSubmit={(data) => createMutation.mutate(data)}
+							onSubmit={(data) => {
+								createMutation.mutate(data, {
+									onSuccess: () => setIsDialogOpen(false),
+								});
+							}}
 							onCancel={() => setIsDialogOpen(false)}
 							isSubmitting={createMutation.isPending}
 						/>

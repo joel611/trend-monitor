@@ -1,29 +1,22 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Switch } from "../ui/switch";
-import { apiClient } from "../../lib/api";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
+import { useToggleSourceStatus } from "../../features/sources/mutations";
+import { Switch } from "../ui/switch";
 
 interface StatusToggleProps {
 	source: SourceConfigWithHealth;
 }
 
 export function StatusToggle({ source }: StatusToggleProps) {
-	const queryClient = useQueryClient();
+	const toggleMutation = useToggleSourceStatus();
 
-	const toggleMutation = useMutation({
-		mutationFn: async (id: string) => {
-			const response = await apiClient.api.sources({ id }).toggle.patch();
-			return response.data;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["sources"] });
-		},
-	});
+	const handleToggle = (enabled: boolean) => {
+		toggleMutation.mutate({ id: source.id, enabled });
+	};
 
 	return (
 		<Switch
 			checked={source.enabled}
-			onCheckedChange={() => toggleMutation.mutate(source.id)}
+			onCheckedChange={handleToggle}
 			disabled={toggleMutation.isPending}
 		/>
 	);

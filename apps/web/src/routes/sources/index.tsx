@@ -1,9 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
-import { Layout } from "../../components/Layout";
-import { SourcesTable } from "../../components/sources/SourcesTable";
 import { SourceSidePanel } from "../../components/sources/SourceSidePanel";
+import { SourcesTable } from "../../components/sources/SourcesTable";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,39 +14,23 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
-import { apiClient } from "../../lib/api";
-import type { SourceConfigWithHealth } from "@trend-monitor/types";
+import { useDeleteSource } from "../../features/sources/mutations";
+import { sourcesQueryOptions } from "../../features/sources/queries";
 
 export const Route = createFileRoute("/sources/")({
 	component: SourcesPage,
 });
 
 function SourcesPage() {
-	const queryClient = useQueryClient();
 	const [sidePanelOpen, setSidePanelOpen] = useState(false);
 	const [sidePanelMode, setSidePanelMode] = useState<"add" | "edit">("add");
 	const [selectedSource, setSelectedSource] = useState<SourceConfigWithHealth | undefined>();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [sourceToDelete, setSourceToDelete] = useState<SourceConfigWithHealth | undefined>();
 
-	const { data, isLoading } = useQuery({
-		queryKey: ["sources"],
-		queryFn: async () => {
-			const response = await apiClient.api.sources.get();
-			return response.data;
-		},
-	});
+	const { data, isLoading } = useQuery(sourcesQueryOptions());
 
-	const deleteMutation = useMutation({
-		mutationFn: async (id: string) => {
-			await apiClient.api.sources({ id }).delete();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["sources"] });
-			setDeleteDialogOpen(false);
-			setSourceToDelete(undefined);
-		},
-	});
+	const deleteMutation = useDeleteSource();
 
 	const handleAddSource = () => {
 		setSidePanelMode("add");
@@ -67,12 +51,17 @@ function SourcesPage() {
 
 	const handleConfirmDelete = () => {
 		if (sourceToDelete) {
-			deleteMutation.mutate(sourceToDelete.id);
+			deleteMutation.mutate(sourceToDelete.id, {
+				onSuccess: () => {
+					setDeleteDialogOpen(false);
+					setSourceToDelete(undefined);
+				},
+			});
 		}
 	};
 
 	return (
-		<Layout>
+		<>
 			<div className="space-y-6">
 				<div>
 					<h1 className="text-2xl font-bold text-gray-900">Sources</h1>
@@ -113,6 +102,6 @@ function SourcesPage() {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</Layout>
+		</>
 	);
 }

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import type { FeedValidationResult } from "@trend-monitor/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
 interface FeedPreviewProps {
 	validation: FeedValidationResult;
@@ -20,9 +20,7 @@ export function FeedPreview({ validation }: FeedPreviewProps) {
 			</CardHeader>
 			<CardContent>
 				{validation.metadata.description && (
-					<p className="text-sm text-muted-foreground mb-4">
-						{validation.metadata.description}
-					</p>
+					<p className="text-sm text-muted-foreground mb-4">{validation.metadata.description}</p>
 				)}
 
 				{validation.preview && validation.preview.length > 0 && (
@@ -45,9 +43,7 @@ export function FeedPreview({ validation }: FeedPreviewProps) {
 										</p>
 									)}
 									{item.content && (
-										<p className="text-sm text-muted-foreground mt-1">
-											{item.content}
-										</p>
+										<p className="text-sm text-muted-foreground mt-1">{item.content}</p>
 									)}
 								</li>
 							))}

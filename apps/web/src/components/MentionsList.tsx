@@ -1,5 +1,5 @@
-import { Badge } from "./ui/badge";
 import type { MentionResponse } from "@trend-monitor/types";
+import { Badge } from "./ui/badge";
 
 interface MentionsListProps {
 	mentions: MentionResponse[];
@@ -7,11 +7,7 @@ interface MentionsListProps {
 
 export function MentionsList({ mentions }: MentionsListProps) {
 	if (mentions.length === 0) {
-		return (
-			<div className="text-center py-12 text-gray-500">
-				No mentions found
-			</div>
-		);
+		return <div className="text-center py-12 text-gray-500">No mentions found</div>;
 	}
 
 	const formatDate = (dateStr: string) => {
@@ -31,14 +27,8 @@ export function MentionsList({ mentions }: MentionsListProps) {
 				>
 					<div className="flex items-start justify-between mb-2">
 						<div className="flex-1">
-							{mention.title && (
-								<h3 className="font-medium text-gray-900 mb-1">
-									{mention.title}
-								</h3>
-							)}
-							<p className="text-sm text-gray-600 line-clamp-3">
-								{mention.content}
-							</p>
+							{mention.title && <h3 className="font-medium text-gray-900 mb-1">{mention.title}</h3>}
+							<p className="text-sm text-gray-600 line-clamp-3">{mention.content}</p>
 						</div>
 						<Badge variant="secondary">{mention.source}</Badge>
 					</div>

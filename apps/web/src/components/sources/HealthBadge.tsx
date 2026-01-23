@@ -1,5 +1,5 @@
-import { Badge } from "../ui/badge";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
+import { Badge } from "../ui/badge";
 
 interface HealthBadgeProps {
 	source: SourceConfigWithHealth;

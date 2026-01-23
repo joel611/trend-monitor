@@ -1,5 +1,5 @@
-import { Skeleton as SkeletonPrimitive } from "./ui/skeleton";
 import { Card } from "./ui/card";
+import { Skeleton as SkeletonPrimitive } from "./ui/skeleton";
 
 export function SkeletonCard() {
 	return (

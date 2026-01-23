@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render } from "@testing-library/react";
 import "../__tests__/setup";
 import { StatsCard } from "./StatsCard";
@@ -12,7 +12,7 @@ describe("StatsCard", () => {
 
 	it("should render trend when provided", () => {
 		const { getByText } = render(
-			<StatsCard title="Active Keywords" value={10} trend={{ value: 15, isPositive: true }} />
+			<StatsCard title="Active Keywords" value={10} trend={{ value: 15, isPositive: true }} />,
 		);
 		expect(getByText("Active Keywords")).toBeTruthy();
 		expect(getByText("10")).toBeTruthy();

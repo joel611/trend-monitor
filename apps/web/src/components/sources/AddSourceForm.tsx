@@ -1,12 +1,13 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import type { FeedValidationResult } from "@trend-monitor/types";
 import { useState } from "react";
+import { useCreateSource } from "../../features/sources/mutations";
+import { apiClient } from "../../lib/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { apiClient } from "../../lib/api";
 import { FeedPreview } from "./FeedPreview";
-import type { FeedValidationResult } from "@trend-monitor/types";
 
 interface AddSourceFormProps {
 	onSuccess: () => void;
@@ -14,7 +15,6 @@ interface AddSourceFormProps {
 }
 
 export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
-	const queryClient = useQueryClient();
 	const [validation, setValidation] = useState<FeedValidationResult | null>(null);
 	const [isValidating, setIsValidating] = useState(false);
 
@@ -28,21 +28,7 @@ export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
 		},
 	});
 
-	const createMutation = useMutation({
-		mutationFn: async (data: {
-			url: string;
-			name: string;
-			type: "feed";
-			customUserAgent?: string;
-		}) => {
-			const response = await apiClient.api.sources.post(data);
-			return response.data;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["sources"] });
-			onSuccess();
-		},
-	});
+	const createMutation = useCreateSource();
 
 	const form = useForm({
 		defaultValues: {
@@ -51,10 +37,17 @@ export function AddSourceForm({ onSuccess, onCancel }: AddSourceFormProps) {
 			customUserAgent: "",
 		},
 		onSubmit: async ({ value }) => {
-			await createMutation.mutateAsync({
-				...value,
-				type: "feed",
-			});
+			createMutation.mutate(
+				{
+					...value,
+					type: "feed",
+				},
+				{
+					onSuccess: () => {
+						onSuccess?.();
+					},
+				},
+			);
 		},
 	});
 

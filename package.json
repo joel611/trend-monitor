@@ -20,7 +20,8 @@
 		"test:integration": "turbo test:integration",
 		"test:e2e": "turbo test:e2e",
 		"test:watch": "turbo test:watch",
-		"test:coverage": "turbo test:coverage"
+		"test:coverage": "turbo test:coverage",
+		"wrangler:types": "turbo wrangler:types"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "latest",

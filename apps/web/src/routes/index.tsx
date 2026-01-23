@@ -1,23 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../lib/api";
+import { createFileRoute } from "@tanstack/react-router";
+import { SkeletonCard } from "../components/Skeleton";
 import { StatsCard } from "../components/StatsCard";
 import { TrendsList } from "../components/TrendsList";
-import { SkeletonCard } from "../components/Skeleton";
+import { trendsOverviewQueryOptions } from "../features/trends/queries";
 
 export const Route = createFileRoute("/")({
 	component: Overview,
 });
 
 function Overview() {
-	const { data, isLoading, error } = useQuery({
-		queryKey: ["trends", "overview"],
-		queryFn: async () => {
-			const response = await apiClient.api.trends.overview.get();
-			if (response.error) throw new Error("Failed to fetch trends");
-			return response.data;
-		},
-	});
+	const { data, isLoading, error } = useQuery(trendsOverviewQueryOptions());
 
 	if (isLoading) {
 		return (

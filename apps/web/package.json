@@ -26,6 +26,7 @@
 		"@tailwindcss/postcss": "^4.1.18",
 		"@tanstack/react-form": "^1.27.7",
 		"@tanstack/react-query": "latest",
+		"@tanstack/react-query-devtools": "^5.91.2",
 		"@tanstack/react-router": "latest",
 		"@tanstack/react-table": "^8.21.3",
 		"@trend-monitor/config": "workspace:*",

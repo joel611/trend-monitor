@@ -1,6 +1,6 @@
 {
 	"$schema": "https://turbo.build/schema.json",
-	"ui": "stream",
+	"ui": "tui",
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
@@ -49,6 +49,11 @@
 			"dependsOn": ["^build"],
 			"cache": false,
 			"outputs": ["coverage/**"]
+		},
+		"wrangler:types": {
+			"cache": false,
+			"outputs": ["worker-configuration.d.ts"],
+			"persistent": false
 		},
 		"deploy": {
 			"dependsOn": ["build", "typecheck", "lint", "test"]

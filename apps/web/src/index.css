@@ -10,10 +10,10 @@
 	--color-primary-300: oklch(0.76 0.11 252);
 	--color-primary-400: oklch(0.65 0.16 252);
 	--color-primary-500: oklch(0.55 0.21 252);
-	--color-primary-600: oklch(0.47 0.20 252);
+	--color-primary-600: oklch(0.47 0.2 252);
 	--color-primary-700: oklch(0.39 0.17 252);
 	--color-primary-800: oklch(0.32 0.13 252);
-	--color-primary-900: oklch(0.27 0.10 252);
+	--color-primary-900: oklch(0.27 0.1 252);
 	--color-primary-950: oklch(0.17 0.06 252);
 }
 
@@ -135,10 +135,10 @@ body {
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+	* {
+		@apply border-border outline-ring/50;
 	}
-  body {
-    @apply bg-background text-foreground;
+	body {
+		@apply bg-background text-foreground;
 	}
 }

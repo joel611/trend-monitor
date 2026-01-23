@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev --persist-to ../../.wrangler/state",
+		"dev": "wrangler dev --persist-to ../../.wrangler-shared/state",
 		"build": "tsc && wrangler deploy --dry-run",
 		"deploy": "wrangler deploy",
 		"test": "bun test",
@@ -18,7 +18,7 @@
 		"format": "biome check src",
 		"format:fix": "biome check --write src",
 		"wrangler:types": "wrangler types",
-		"wrangler:migrate:local": "bunx wrangler d1 migrations apply DB --local --persist-to ../../.wrangler/state"
+		"wrangler:migrate:local": "bunx wrangler d1 migrations apply DB --local --persist-to ../../.wrangler-shared/state"
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^1.4.1",

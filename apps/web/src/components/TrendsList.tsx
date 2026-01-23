@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import type { TrendKeyword } from "@trend-monitor/types";
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
-import type { TrendKeyword } from "@trend-monitor/types";
 
 interface TrendsListProps {
 	title: string;
@@ -33,20 +33,15 @@ export function TrendsList({ title, keywords, showGrowth = true }: TrendsListPro
 						<div className="flex items-center justify-between">
 							<div className="flex items-center space-x-3">
 								<span className="font-medium text-gray-900">{keyword.name}</span>
-								{keyword.isEmerging && (
-									<Badge variant="default">Emerging</Badge>
-								)}
+								{keyword.isEmerging && <Badge variant="default">Emerging</Badge>}
 							</div>
 							<div className="flex items-center space-x-4 text-sm">
-								<span className="text-gray-600">
-									{keyword.currentPeriod} mentions
-								</span>
+								<span className="text-gray-600">{keyword.currentPeriod} mentions</span>
 								{showGrowth && keyword.growthRate !== 0 && (
 									<span
 										className={`font-medium ${keyword.growthRate > 0 ? "text-green-600" : "text-red-600"}`}
 									>
-										{keyword.growthRate > 0 ? "↑" : "↓"}{" "}
-										{Math.abs(keyword.growthRate).toFixed(1)}%
+										{keyword.growthRate > 0 ? "↑" : "↓"} {Math.abs(keyword.growthRate).toFixed(1)}%
 									</span>
 								)}
 							</div>

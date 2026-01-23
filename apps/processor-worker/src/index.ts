@@ -11,6 +11,7 @@ interface Env {
 
 export default {
 	async queue(batch: MessageBatch<IngestionEvent>, env: Env): Promise<void> {
+		console.log("start working on batch");
 		// Initialize services
 		const keywordCache = new KeywordCache(db, env.KEYWORD_CACHE);
 		const keywordMatcher = new KeywordMatcher();

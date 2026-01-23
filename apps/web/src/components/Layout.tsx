@@ -12,10 +12,7 @@ export function Layout({ children }: LayoutProps) {
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex justify-between h-16">
 						<div className="flex">
-							<Link
-								to="/"
-								className="flex items-center px-2 text-gray-900 font-semibold text-xl"
-							>
+							<Link to="/" className="flex items-center px-2 text-gray-900 font-semibold text-xl">
 								Trend Monitor
 							</Link>
 							<div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -45,9 +42,7 @@ export function Layout({ children }: LayoutProps) {
 					</div>
 				</div>
 			</nav>
-			<main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-				{children}
-			</main>
+			<main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">{children}</main>
 		</div>
 	);
 }
