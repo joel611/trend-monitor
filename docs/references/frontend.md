@@ -92,30 +92,66 @@ const form = useForm({
 
 ### TanStack Query
 
-Always invalidate queries after mutations to ensure cache consistency:
+#### Query Options Pattern
+
+Use queryOptions factory functions for all queries to ensure type safety and reusability:
 
 ```typescript
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from '../lib/api'
+// features/keywords/queries.ts
+import { queryOptions } from '@tanstack/react-query';
+import { apiClient } from '../../lib/api';
 
-const queryClient = useQueryClient();
+export function keywordsQueryOptions() {
+  return queryOptions({
+    queryKey: ['keywords'],
+    queryFn: async () => {
+      const response = await apiClient.api.keywords.get();
+      if (response.error) throw new Error('Failed to fetch keywords');
+      return response.data;
+    },
+  });
+}
 
-const mutation = useMutation({
-  mutationFn: async (data) => {
-    return await apiClient.api.sources.post(data);
-  },
-  onSuccess: () => {
-    // Invalidate and refetch
-    queryClient.invalidateQueries({ queryKey: ["sources"] });
-  },
+// In components:
+const { data } = useQuery(keywordsQueryOptions());
+```
+
+#### Mutation Hooks Pattern
+
+Use custom hooks for mutations to encapsulate API calls and cache invalidation:
+
+```typescript
+// features/keywords/mutations.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../../lib/api';
+import type { CreateKeywordRequest } from '@trend-monitor/types';
+
+export function useCreateKeyword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: CreateKeywordRequest) => {
+      const response = await apiClient.api.keywords.post(data);
+      if (response.error) throw new Error('Failed to create keyword');
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['keywords'] });
+    },
+  });
+}
+
+// In components:
+const createMutation = useCreateKeyword();
+createMutation.mutate(data, {
+  onSuccess: () => setIsDialogOpen(false),
 });
 ```
 
 **Key Patterns:**
-- Query keys: Use consistent query keys across the app
-- Optimistic updates: Use `onMutate` for instant UI feedback
-- Error handling: Use `onError` to handle mutation failures
-- Loading states: Use `isPending`, `isError`, `isSuccess` from query/mutation
+- Never write API calls directly in components
+- Always use queryOptions() factory functions for queries
+- Always use custom mutation hooks with built-in cache invalidation
+- Component-specific side effects (UI state) go in component's onSuccess
 
 ### Eden Treaty Client
 
