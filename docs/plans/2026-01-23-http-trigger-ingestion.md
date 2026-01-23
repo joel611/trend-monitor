@@ -824,8 +824,6 @@ src/
 │   ├── feed-parser.ts    # RSS/Atom parser using rss-parser
 │   ├── feed-client.ts    # Feed fetcher with user agent support
 │   └── html-to-text.ts   # HTML to plain text converter
-├── repositories/
-│   └── source-config-repository.ts  # Load feed configs from D1
 ├── services/
 │   ├── checkpoint-service.ts        # KV-based checkpoint storage
 │   ├── ingestion-service.ts         # Feed processing with checkpointing
