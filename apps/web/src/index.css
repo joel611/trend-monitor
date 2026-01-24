@@ -134,11 +134,59 @@ body {
 	--sidebar-ring: oklch(0.556 0 0);
 }
 
+.retro-futuristic {
+	font-family: ui-monospace, "Courier New", monospace;
+	--background: oklch(0.04 0.01 252);
+	--foreground: oklch(0.67 0.14 165);
+	--card: oklch(0.06 0.01 252);
+	--card-foreground: oklch(0.8 0.12 165);
+	--popover: oklch(0.06 0.01 252);
+	--popover-foreground: oklch(0.8 0.12 165);
+	--primary: oklch(0.67 0.14 165);
+	--primary-foreground: oklch(0.04 0.01 252);
+	--secondary: oklch(0.12 0.02 165);
+	--secondary-foreground: oklch(0.67 0.14 165);
+	--muted: oklch(0.12 0.02 165);
+	--muted-foreground: oklch(0.5 0.1 165);
+	--accent: oklch(0.15 0.03 165);
+	--accent-foreground: oklch(0.8 0.12 165);
+	--destructive: oklch(0.577 0.245 27.325);
+	--border: oklch(0.3 0.08 165 / 30%);
+	--input: oklch(0.3 0.08 165 / 30%);
+	--ring: oklch(0.67 0.14 165);
+	--chart-1: oklch(0.67 0.14 165);
+	--chart-2: oklch(0.6 0.12 155);
+	--chart-3: oklch(0.55 0.1 175);
+	--chart-4: oklch(0.7 0.15 160);
+	--chart-5: oklch(0.65 0.13 170);
+	--sidebar: oklch(0.04 0.01 252);
+	--sidebar-foreground: oklch(0.67 0.14 165);
+	--sidebar-primary: oklch(0.67 0.14 165);
+	--sidebar-primary-foreground: oklch(0.04 0.01 252);
+	--sidebar-accent: oklch(0.12 0.02 165);
+	--sidebar-accent-foreground: oklch(0.8 0.12 165);
+	--sidebar-border: oklch(0.3 0.08 165 / 30%);
+	--sidebar-ring: oklch(0.67 0.14 165);
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
 	}
 	body {
 		@apply bg-background text-foreground;
+	}
+}
+
+@layer utilities {
+	.terminal-glow {
+		text-shadow:
+			0 0 10px currentColor,
+			0 0 20px currentColor;
+	}
+
+	.scan-line {
+		background: linear-gradient(to bottom, transparent 50%, rgba(16, 185, 129, 0.03) 50%);
+		background-size: 100% 4px;
 	}
 }
