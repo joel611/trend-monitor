@@ -1,56 +1,30 @@
-import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { mockDb } from "../test/mock-db";
+import { sourceConfigs } from "@trend-monitor/db/schema";
+import { eq } from "drizzle-orm";
 import worker from "./index";
 
 describe("Feed Ingestion Worker", () => {
 	let mockEnv: any;
 	let mockCtx: ExecutionContext;
-	let sqlite: Database;
 
 	beforeEach(async () => {
-		sqlite = new Database(":memory:");
+		// Clear database
+		await mockDb.delete(sourceConfigs);
 
-		await sqlite.exec(`
-			CREATE TABLE IF NOT EXISTS source_configs (
-				id TEXT PRIMARY KEY,
-				type TEXT NOT NULL,
-				config TEXT NOT NULL,
-				enabled INTEGER NOT NULL DEFAULT 1,
-				created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				last_fetch_at TEXT,
-				last_success_at TEXT,
-				last_error_at TEXT,
-				last_error_message TEXT,
-				consecutive_failures INTEGER NOT NULL DEFAULT 0,
-				deleted_at TEXT
-			)
-		`);
-
-		await sqlite.exec(`
-			INSERT INTO source_configs (id, type, config, enabled)
-			VALUES ('feed-test', 'feed', '${JSON.stringify({
+		// Insert test source config
+		await mockDb.insert(sourceConfigs).values({
+			id: "feed-test",
+			type: "feed",
+			config: {
 				url: "https://example.com/rss",
 				name: "Test Feed",
-			})}', 1)
-		`);
+			},
+			enabled: true,
+		});
 
 		mockEnv = {
-			DB: {
-				prepare: (sql: string) => {
-					const stmt = sqlite.prepare(sql);
-					return {
-						bind: (...values: any[]) => {
-							return {
-								all: async () => {
-									const results = stmt.all(...values) as any[];
-									return { results };
-								},
-							};
-						},
-					};
-				},
-			},
+			DB: mockDb,
 			CHECKPOINT: {
 				get: mock(() => Promise.resolve(null)),
 				put: mock(() => Promise.resolve()),
@@ -122,10 +96,14 @@ describe("Feed Ingestion Worker", () => {
 			await worker.scheduled(event, mockEnv, mockCtx);
 
 			// Verify success was recorded
-			const result = sqlite.prepare("SELECT * FROM source_configs WHERE id = ?").get("feed-test") as any;
-			expect(result.last_success_at).toBeDefined();
-			expect(result.consecutive_failures).toBe(0);
-			expect(result.last_error_message).toBeNull();
+			const result = await mockDb
+				.select()
+				.from(sourceConfigs)
+				.where(eq(sourceConfigs.id, "feed-test"))
+				.get();
+			expect(result?.lastSuccessAt).toBeDefined();
+			expect(result?.consecutiveFailures).toBe(0);
+			expect(result?.lastErrorMessage).toBeNull();
 
 			globalThis.fetch = originalFetch;
 		});
@@ -138,17 +116,24 @@ describe("Feed Ingestion Worker", () => {
 			await worker.scheduled(event, mockEnv, mockCtx);
 
 			// Verify failure was recorded
-			const result = sqlite.prepare("SELECT * FROM source_configs WHERE id = ?").get("feed-test") as any;
-			expect(result.last_error_at).toBeDefined();
-			expect(result.last_error_message).toBe("Network timeout");
-			expect(result.consecutive_failures).toBe(1);
+			const result = await mockDb
+				.select()
+				.from(sourceConfigs)
+				.where(eq(sourceConfigs.id, "feed-test"))
+				.get();
+			expect(result?.lastErrorAt).toBeDefined();
+			expect(result?.lastErrorMessage).toBe("Network timeout");
+			expect(result?.consecutiveFailures).toBe(1);
 
 			globalThis.fetch = originalFetch;
 		});
 
 		test("auto-disable source after 10 consecutive failures", async () => {
 			// Set consecutive failures to 9
-			sqlite.prepare("UPDATE source_configs SET consecutive_failures = ? WHERE id = ?").run(9, "feed-test");
+			await mockDb
+				.update(sourceConfigs)
+				.set({ consecutiveFailures: 9 })
+				.where(eq(sourceConfigs.id, "feed-test"));
 
 			const originalFetch = globalThis.fetch;
 			globalThis.fetch = mock(() => Promise.reject(new Error("Network timeout"))) as any;
@@ -157,16 +142,23 @@ describe("Feed Ingestion Worker", () => {
 			await worker.scheduled(event, mockEnv, mockCtx);
 
 			// Verify source was auto-disabled
-			const result = sqlite.prepare("SELECT * FROM source_configs WHERE id = ?").get("feed-test") as any;
-			expect(result.enabled).toBe(0);
-			expect(result.consecutive_failures).toBe(10);
+			const result = await mockDb
+				.select()
+				.from(sourceConfigs)
+				.where(eq(sourceConfigs.id, "feed-test"))
+				.get();
+			expect(result?.enabled).toBe(false);
+			expect(result?.consecutiveFailures).toBe(10);
 
 			globalThis.fetch = originalFetch;
 		});
 
 		test("reset failure counter on success after failures", async () => {
 			// Set consecutive failures to 5
-			sqlite.prepare("UPDATE source_configs SET consecutive_failures = ? WHERE id = ?").run(5, "feed-test");
+			await mockDb
+				.update(sourceConfigs)
+				.set({ consecutiveFailures: 5 })
+				.where(eq(sourceConfigs.id, "feed-test"));
 
 			const mockRss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -187,9 +179,13 @@ describe("Feed Ingestion Worker", () => {
 			await worker.scheduled(event, mockEnv, mockCtx);
 
 			// Verify failure counter was reset
-			const result = sqlite.prepare("SELECT * FROM source_configs WHERE id = ?").get("feed-test") as any;
-			expect(result.consecutive_failures).toBe(0);
-			expect(result.last_success_at).toBeDefined();
+			const result = await mockDb
+				.select()
+				.from(sourceConfigs)
+				.where(eq(sourceConfigs.id, "feed-test"))
+				.get();
+			expect(result?.consecutiveFailures).toBe(0);
+			expect(result?.lastSuccessAt).toBeDefined();
 
 			globalThis.fetch = originalFetch;
 		});

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
+import { toast } from "sonner";
 import { SourceSidePanel } from "../../components/sources/SourceSidePanel";
 import { SourcesTable } from "../../components/sources/SourcesTable";
 import {
@@ -14,7 +15,11 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
-import { useDeleteSource } from "../../features/sources/mutations";
+import {
+	useDeleteSource,
+	useTriggerAllSources,
+	useTriggerSource,
+} from "../../features/sources/mutations";
 import { sourcesQueryOptions } from "../../features/sources/queries";
 
 export const Route = createFileRoute("/sources/")({
@@ -27,10 +32,13 @@ function SourcesPage() {
 	const [selectedSource, setSelectedSource] = useState<SourceConfigWithHealth | undefined>();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [sourceToDelete, setSourceToDelete] = useState<SourceConfigWithHealth | undefined>();
+	const [triggeringSourceId, setTriggeringSourceId] = useState<string | null>(null);
 
 	const { data, isLoading } = useQuery(sourcesQueryOptions());
 
 	const deleteMutation = useDeleteSource();
+	const triggerAllMutation = useTriggerAllSources();
+	const triggerSourceMutation = useTriggerSource();
 
 	const handleAddSource = () => {
 		setSidePanelMode("add");
@@ -60,6 +68,45 @@ function SourcesPage() {
 		}
 	};
 
+	const handleTriggerAll = () => {
+		triggerAllMutation.mutate(undefined, {
+			onSuccess: (data) => {
+				toast.success("Ingestion triggered", {
+					description: `${data.summary.successfulSources} succeeded, ${data.summary.failedSources} failed. ${data.summary.totalEvents} events processed.`,
+				});
+			},
+			onError: (error) => {
+				toast.error("Failed to trigger ingestion", {
+					description: error.message,
+				});
+			},
+		});
+	};
+
+	const handleTriggerSource = (source: SourceConfigWithHealth) => {
+		setTriggeringSourceId(source.id);
+		triggerSourceMutation.mutate(source.id, {
+			onSuccess: (data) => {
+				setTriggeringSourceId(null);
+				if (data.success) {
+					toast.success(`${data.sourceName} triggered`, {
+						description: `${data.eventsCount} events processed`,
+					});
+				} else {
+					toast.error(`${data.sourceName} failed`, {
+						description: data.error,
+					});
+				}
+			},
+			onError: (error) => {
+				toast.error("Failed to trigger source", {
+					description: error.message,
+				});
+				setTriggeringSourceId(null);
+			},
+		});
+	};
+
 	return (
 		<>
 			<div className="space-y-6">
@@ -76,6 +123,10 @@ function SourcesPage() {
 						onAddSource={handleAddSource}
 						onEditSource={handleEditSource}
 						onDeleteSource={handleDeleteSource}
+						onTriggerSource={handleTriggerSource}
+						onTriggerAll={handleTriggerAll}
+						isTriggeringAll={triggerAllMutation.isPending}
+						triggeringSourceId={triggeringSourceId}
 					/>
 				)}
 			</div>

@@ -23,11 +23,13 @@
 		"@trend-monitor/db": "workspace:*",
 		"@trend-monitor/types": "workspace:*",
 		"@trend-monitor/utils": "workspace:*",
-		"rss-parser": "^3.13.0"
+		"rss-parser": "^3.13.0",
+		"elysia": "^1.1.31"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "latest",
 		"@types/bun": "latest",
+		"drizzle-orm": "^0.45.1",
 		"typescript": "^5.7.0",
 		"wrangler": "latest"
 	}

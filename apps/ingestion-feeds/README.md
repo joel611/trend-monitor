@@ -81,7 +81,7 @@ bun run deploy
 
 ## How It Works
 
-1. **Cron triggers** worker every 15 minutes
+1. **Cron triggers** worker every 15 minutes (or manual HTTP trigger)
 2. **Loads active configs** from D1 `source_configs` table
 3. **For each feed:**
    - Fetches RSS/Atom XML
@@ -91,6 +91,103 @@ bun run deploy
    - Transforms to `IngestionEvent` format
    - Updates checkpoint
 4. **Publishes events** to ingestion queue in batch
+
+## HTTP Endpoints
+
+In addition to scheduled execution, feeds can be triggered manually via HTTP endpoints:
+
+### Health Check
+
+```bash
+GET /health
+```
+
+Response:
+```json
+{
+  "status": "ok"
+}
+```
+
+### Trigger All Sources
+
+Manually trigger ingestion for all enabled feed sources.
+
+```bash
+POST /trigger/all
+```
+
+Response:
+```json
+{
+  "success": true,
+  "summary": {
+    "totalSources": 5,
+    "successfulSources": 4,
+    "failedSources": 1,
+    "totalEvents": 42,
+    "durationMs": 3456
+  },
+  "results": [
+    {
+      "sourceId": "abc123",
+      "sourceName": "Hacker News",
+      "status": "success",
+      "eventsCount": 15,
+      "checkpoint": "2026-01-23T10:30:00Z"
+    },
+    {
+      "sourceId": "def456",
+      "sourceName": "Reddit r/programming",
+      "status": "failed",
+      "eventsCount": 0,
+      "error": "Feed fetch timeout"
+    }
+  ]
+}
+```
+
+### Trigger Single Source
+
+Manually trigger ingestion for a specific feed source by ID.
+
+```bash
+POST /trigger/:id
+```
+
+Success Response:
+```json
+{
+  "success": true,
+  "sourceId": "abc123",
+  "sourceName": "Hacker News",
+  "eventsCount": 15,
+  "checkpoint": "2026-01-23T10:30:00Z",
+  "durationMs": 1234
+}
+```
+
+Error Response:
+```json
+{
+  "success": false,
+  "sourceId": "unknown",
+  "sourceName": "Unknown",
+  "error": "Source not found",
+  "durationMs": 45
+}
+```
+
+### Usage Examples
+
+```bash
+# Local development
+curl -X POST http://localhost:8792/trigger/all
+curl -X POST http://localhost:8792/trigger/feed-hackernews
+
+# Production (replace with your worker URL)
+curl -X POST https://ingestion-feeds.your-domain.workers.dev/trigger/all
+```
 
 ## Monitoring
 

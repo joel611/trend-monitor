@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import type { SourceConfigWithHealth } from "@trend-monitor/types";
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ActionButtons } from "./ActionButtons";
@@ -19,6 +20,10 @@ interface SourcesTableProps {
 	onAddSource: () => void;
 	onEditSource: (source: SourceConfigWithHealth) => void;
 	onDeleteSource: (source: SourceConfigWithHealth) => void;
+	onTriggerSource: (source: SourceConfigWithHealth) => void;
+	onTriggerAll: () => void;
+	isTriggeringAll?: boolean;
+	triggeringSourceId?: string | null;
 }
 
 export function SourcesTable({
@@ -26,6 +31,10 @@ export function SourcesTable({
 	onAddSource,
 	onEditSource,
 	onDeleteSource,
+	onTriggerSource,
+	onTriggerAll,
+	isTriggeringAll,
+	triggeringSourceId,
 }: SourcesTableProps) {
 	const [globalFilter, setGlobalFilter] = useState("");
 
@@ -97,7 +106,13 @@ export function SourcesTable({
 			id: "actions",
 			header: "",
 			cell: ({ row }) => (
-				<ActionButtons source={row.original} onEdit={onEditSource} onDelete={onDeleteSource} />
+				<ActionButtons
+					source={row.original}
+					onEdit={onEditSource}
+					onDelete={onDeleteSource}
+					onTrigger={onTriggerSource}
+					isTriggeringSource={triggeringSourceId === row.original.id}
+				/>
 			),
 		},
 	];
@@ -123,7 +138,17 @@ export function SourcesTable({
 					onChange={(e) => setGlobalFilter(e.target.value)}
 					className="max-w-sm"
 				/>
-				<Button onClick={onAddSource}>Add Source</Button>
+				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						onClick={onTriggerAll}
+						disabled={isTriggeringAll || sources.length === 0}
+					>
+						<RefreshCw className={`h-4 w-4 mr-2 ${isTriggeringAll ? "animate-spin" : ""}`} />
+						Trigger All
+					</Button>
+					<Button onClick={onAddSource}>Add Source</Button>
+				</div>
 			</div>
 
 			<div className="border rounded-lg">
