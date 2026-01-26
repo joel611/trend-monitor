@@ -1,48 +1,101 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Menu, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ThemeSwitcher } from "./ThemeSwitcher";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 
 interface LayoutProps {
 	children: ReactNode;
 }
 
-export function Layout({ children }: LayoutProps) {
+function SidebarContent() {
 	return (
-		<div className="min-h-screen bg-gray-50">
-			<nav className="bg-white shadow-sm">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex justify-between h-16">
-						<div className="flex">
-							<Link to="/" className="flex items-center px-2 text-gray-900 font-semibold text-xl">
-								Trend Monitor
-							</Link>
-							<div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-								<Link
-									to="/"
-									className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
-									activeProps={{ className: "border-b-2 border-primary-500" }}
-								>
-									Overview
-								</Link>
-								<Link
-									to="/keywords"
-									className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-									activeProps={{ className: "border-b-2 border-primary-500 text-gray-900" }}
-								>
-									Keywords
-								</Link>
-								<Link
-									to="/sources"
-									className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-									activeProps={{ className: "border-b-2 border-primary-500 text-gray-900" }}
-								>
-									Sources
-								</Link>
-							</div>
-						</div>
-					</div>
+		<>
+			{/* Navigation */}
+			<nav className="flex-1 p-4">
+				<div className="flex flex-col gap-1">
+					<Link
+						to="/"
+						className="px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+						activeProps={{
+							className: "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
+						}}
+					>
+						Overview
+					</Link>
+					<Link
+						to="/keywords"
+						className="px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+						activeProps={{
+							className: "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
+						}}
+					>
+						Keywords
+					</Link>
+					<Link
+						to="/sources"
+						className="px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+						activeProps={{
+							className: "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
+						}}
+					>
+						Sources
+					</Link>
 				</div>
 			</nav>
-			<main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">{children}</main>
+
+			{/* Footer with Theme Switcher */}
+			<div className="p-4 border-t border-sidebar-border">
+				<ThemeSwitcher />
+			</div>
+		</>
+	);
+}
+
+export function Layout({ children }: LayoutProps) {
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+	return (
+		<div className="flex h-screen">
+			{/* Desktop Sidebar */}
+			<aside className="hidden md:flex w-64 border-r border-border bg-sidebar flex-col">
+				{/* Header */}
+				<div className="p-6 border-b border-sidebar-border">
+					<h1 className="text-xl font-semibold text-sidebar-foreground">Trend Monitor</h1>
+				</div>
+
+				<SidebarContent />
+			</aside>
+
+			{/* Mobile Sheet */}
+			<Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+				<SheetContent side="left" className="w-64 p-0 bg-sidebar">
+					<SheetHeader className="p-6 border-b border-sidebar-border">
+						<SheetTitle className="text-sidebar-foreground">Trend Monitor</SheetTitle>
+					</SheetHeader>
+					<div className="flex flex-col h-[calc(100%-5rem)]">
+						<SidebarContent />
+					</div>
+				</SheetContent>
+			</Sheet>
+
+			{/* Main Content */}
+			<main className="flex-1 flex flex-col overflow-hidden">
+				{/* Mobile Header */}
+				<div className="md:hidden flex items-center gap-4 p-4 border-b border-border bg-background">
+					<button
+						type="button"
+						onClick={() => setMobileMenuOpen(true)}
+						className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+						aria-label="Open menu"
+					>
+						<Menu className="h-6 w-6" />
+					</button>
+					<h1 className="text-lg font-semibold">Trend Monitor</h1>
+				</div>
+
+				<div className="flex-1 overflow-auto p-6">{children}</div>
+			</main>
 		</div>
 	);
 }
