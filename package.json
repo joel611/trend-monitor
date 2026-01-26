@@ -29,5 +29,8 @@
 		"turbo": "latest",
 		"typescript": "^5.7.0",
 		"wrangler": "latest"
+	},
+	"dependencies": {
+		"zustand": "^5.0.10"
 	}
 }
